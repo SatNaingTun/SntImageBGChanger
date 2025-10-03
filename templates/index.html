@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <!-- Mobile friendly viewport with iOS safe-areas -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Camera Control</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="card">
+      <h2>Camera Control</h2>
+      <p class="subtitle">Defaults to the selfie (front) camera. Use the switch & settings below.</p>
+
+      <div class="video-wrap">
+        <video id="preview" autoplay playsinline muted></video>
+      </div>
+
+      <div class="controls">
+        <button id="btnStart">Start (Selfie)</button>
+        <button id="btnSwitch">Switch Camera</button>
+        <button id="btnStop" class="btn-danger">Stop</button>
+      </div>
+
+      <h3>Settings</h3>
+
+      <div class="settings">
+        <label class="field">
+          <span>Resolution</span>
+          <select id="selRes">
+            <option value="640x480">640×480 (SD)</option>
+            <option value="1280x720">1280×720 (HD)</option>
+            <option value="1920x1080">1920×1080 (Full HD)</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>FPS</span>
+          <input id="inpFps" type="number" min="1" max="60" value="30" inputmode="numeric" />
+        </label>
+
+        <label class="field">
+          <span>Use Torch (if available)</span>
+          <select id="selTorch">
+            <option value="off">Off</option>
+            <option value="on">On</option>
+          </select>
+        </label>
+
+        <button id="btnApply" class="btn-primary">Apply Settings</button>
+      </div>
+
+      <p class="notes">
+        Tip: Mobile browsers typically require <strong>HTTPS</strong> for camera access
+        (localhost is allowed). Use a reverse proxy or dev tunnel if testing over Wi-Fi.
+      </p>
+    </section>
+  </main>
+
+  <script src="/static/js/camera.js"></script>
+</body>
+</html>

@@ -1,0 +1,157 @@
+/* Reset-ish: smooth fonts, box model */
+* { box-sizing: border-box; }
+html, body {
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Page layout: full-viewport, nice center on all devices */
+:root {
+  --pad: 16px;
+  --card-w: 880px;
+  --radius: 14px;
+  --bg: #f6f7fb;
+  --fg: #0f1115;
+  --muted: #667085;
+  --border: #e6e8ee;
+  --btn: #ffffff;
+  --btn-border: #d7dbe5;
+  --btn-danger: #ffefef;
+  --btn-danger-border: #ffd6d6;
+  --primary: #2e6bff;
+  --primary-contrast: #ffffff;
+}
+
+/* Respect iOS safe areas */
+body {
+  margin: 0;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+  background: var(--bg);
+  color: var(--fg);
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  line-height: 1.45;
+}
+
+/* Center the card both horizontally & vertically */
+.page {
+  min-height: 100svh; /* better on mobile than 100vh */
+  display: grid;
+  place-items: center;
+  padding: clamp(12px, 3vw, 28px);
+}
+
+/* Card */
+.card {
+  width: min(100%, var(--card-w));
+  background: #fff;
+  border-radius: var(--radius);
+  padding: clamp(16px, 3vw, 24px);
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.08);
+}
+
+/* Headings */
+h2 {
+  margin: 0 0 6px 0;
+  font-size: clamp(20px, 3.5vw, 26px);
+}
+.subtitle {
+  margin: 0 0 14px 0;
+  color: var(--muted);
+  font-size: clamp(13px, 2.8vw, 15px);
+}
+h3 {
+  margin: 18px 0 10px;
+  font-size: clamp(16px, 3.2vw, 18px);
+}
+
+/* Video wrapper with aspect ratio for consistent layout */
+.video-wrap {
+  width: 100%;
+  display: block;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: calc(var(--radius) - 2px);
+  background: #000;
+  overflow: hidden;
+  /* Default aspect ratio; browser will adapt to stream size */
+  aspect-ratio: 3 / 2;
+}
+
+/* Video element fills wrapper; keeps aspect via object-fit */
+video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: contain; /* show entire frame without cropping */
+}
+
+/* Controls: responsive grid of buttons */
+.controls {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 12px;
+}
+
+/* Settings: mobile-first stacked layout; auto-fit on wider screens */
+.settings {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr; /* mobile: stacked */
+  align-items: end;
+}
+@media (min-width: 520px) {
+  .settings {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* Fields & labels */
+.field {
+  display: grid;
+  gap: 6px;
+}
+.field > span {
+  font-size: 13px;
+  color: var(--muted);
+}
+
+/* Buttons & inputs: large touch targets */
+button, select, input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;           /* prevents iOS zoom on input focus */
+  border-radius: 12px;
+  border: 1px solid var(--btn-border);
+  background: var(--btn);
+  color: var(--fg);
+  outline: none;
+}
+button { cursor: pointer; }
+button:hover { filter: brightness(0.99); }
+button:active { filter: brightness(0.96); }
+
+/* Prominent variants */
+.btn-primary {
+  background: var(--primary);
+  color: var(--primary-contrast);
+  border-color: var(--primary);
+}
+.btn-danger {
+  background: var(--btn-danger);
+  border-color: var(--btn-danger-border);
+}
+
+/* Notes */
+.notes {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* Reduce motion for users with preference */
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
+}
