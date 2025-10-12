@@ -10,7 +10,9 @@ app = FastAPI(title="FastAPI Camera App")
 
 # Mount static files and set template directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+app.mount("/images/upload", StaticFiles(directory="images/upload"), name="upload")
+app.mount("/images/changed", StaticFiles(directory="images/changed"), name="changed")
+app.mount("/images/background", StaticFiles(directory="images/background"), name="background")
 
 templates = Jinja2Templates(directory="templates")
 
