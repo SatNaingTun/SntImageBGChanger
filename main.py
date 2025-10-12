@@ -9,15 +9,25 @@ from routers import webcam
 app = FastAPI(title="FastAPI Camera App")
 
 # Mount static files and set template directory
-app.mount("/static", StaticFiles(directory="static"), name="static")
-app.mount("/images/upload", StaticFiles(directory="images/upload"), name="upload")
-app.mount("/images/changed", StaticFiles(directory="images/changed"), name="changed")
-app.mount("/images/background", StaticFiles(directory="images/background"), name="background")
 
+class NoCacheStaticFiles(StaticFiles):
+    async def get_response(self, path, scope):
+        response = await super().get_response(path, scope)
+        if response.status_code == 200:
+            response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        return response
+
+app.mount("/images/upload", NoCacheStaticFiles(directory="images/upload"), name="upload")
+app.mount("/images/changed", NoCacheStaticFiles(directory="images/changed"), name="changed")
+app.mount("/images/background", NoCacheStaticFiles(directory="images/background"), name="background")
+
+app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
 from routers import webcam, stream_modnet, background_api, image_page, modenet_api
+from routers import image_api
 
+app.include_router(image_api.router)
 app.include_router(webcam.router)
 app.include_router(stream_modnet.router)
 app.include_router(background_api.router)
