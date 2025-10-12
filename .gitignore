@@ -3,7 +3,13 @@ __pycache__/
 __pycache__/main.cpython-313.pyc
 .venv/
 env/
-images/uploads/
+images/upload/
 images/changed/
 images/background/
+images/upload/*.*
+images/changed/*.*
+images/background/*.*
 __pycache__/main.cpython-313.pyc
+# images/upload/Sat Naing Tun-1x1.5.tif
+# images/upload/Sat Naing Tun-photo.jpg
+# images/upload/snt photo 2025.png
