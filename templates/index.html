@@ -2,21 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>FastAPI Camera Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FastAPI MODNet App</title>
   <link rel="stylesheet" href="/static/css/styles.css" />
 </head>
 <body>
   <main class="page">
     <section class="card" style="text-align:center">
-      <h2>Welcome to FastAPI Camera App</h2>
-      <p>This demo shows how to control laptop or mobile cameras from a webpage.</p>
-      <a href="/webcam">
-        <button class="btn-primary" style="width:auto;padding:14px 24px;margin-top:16px">
-          Open Webcam Page
-        </button>
-      </a>
-      <p class="notes">Works on laptop webcam and mobile front/back cameras.</p>
+      <h2>Welcome to MODNet Background Changer</h2>
+      <p>Select a mode below:</p>
+      <div style="margin-top:16px;">
+        <a href="/webcam"><button class="btn-primary" style="margin:6px;">Live Webcam Mode</button></a>
+        <a href="/image"><button class="btn-primary" style="margin:6px;">Upload Image Mode</button></a>
+      </div>
     </section>
   </main>
 </body>

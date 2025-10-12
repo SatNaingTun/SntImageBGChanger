@@ -10,10 +10,17 @@ app = FastAPI(title="FastAPI Camera App")
 
 # Mount static files and set template directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
+
 templates = Jinja2Templates(directory="templates")
 
-# Include router
+from routers import webcam, stream_modnet, background_api, image_page, modenet_api
+
 app.include_router(webcam.router)
+app.include_router(stream_modnet.router)
+app.include_router(background_api.router)
+app.include_router(modenet_api.router)
+app.include_router(image_page.router)
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):

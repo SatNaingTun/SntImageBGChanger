@@ -2,7 +2,7 @@ import cv2
 import base64
 import numpy as np
 from fastapi import APIRouter, File, UploadFile
-from models.modnet_infer import apply_modnet
+from modnet_infer import apply_modnet
 
 router = APIRouter(prefix="/api/modnet", tags=["MODNet"])
 
