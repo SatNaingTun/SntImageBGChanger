@@ -1,18 +1,21 @@
 from fastapi import FastAPI, Request
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
-import pathlib
+from fastapi.staticfiles import StaticFiles
 
-app = FastAPI()
+# Import routers from subpackage
+from routers import webcam
 
-# Serve static files from ./static
+app = FastAPI(title="FastAPI Camera App")
+
+# Mount static files and set template directory
 app.mount("/static", StaticFiles(directory="static"), name="static")
-
 templates = Jinja2Templates(directory="templates")
 
+# Include router
+app.include_router(webcam.router)
 
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    # Render templates/index.html
+async def home(request: Request):
+    """Main home page"""
     return templates.TemplateResponse("index.html", {"request": request})
