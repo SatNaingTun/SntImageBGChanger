@@ -5,9 +5,9 @@ document.addEventListener("DOMContentLoaded", () => {
   const startBtn = document.getElementById("startBtn");
   const modeSelect = document.getElementById("modeSelect");
   const colorPicker = document.getElementById("colorPicker");
-  const bgFileInput = document.getElementById("bg_file");
   const bgLabel = document.getElementById("bg_label");
   const bgPreview = document.getElementById("bg_preview");
+  const bgFile = document.getElementById("bg_file");
 
   let streaming = false;
   let intervalId = null;
@@ -19,19 +19,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (mode === "custom") {
       bgLabel.style.display = "inline-block";
-      bgPreview.style.display = bgFileInput.files.length > 0 ? "inline-block" : "none";
+      bgPreview.style.display = bgFile.files.length > 0 ? "inline-block" : "none";
       colorPicker.style.display = "none"; // hide color picker for custom BG
     } else {
       bgLabel.style.display = "none";
       bgPreview.style.display = "none";
-      bgFileInput.value = "";
+      bgFile.value = "";
       bgPreview.src = "";
       colorPicker.style.display = "inline-block"; // show color picker again
     }
   });
 
   // 🖼️ Preview uploaded background
-  bgFileInput.addEventListener("change", (e) => {
+  bgFile.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
       const reader = new FileReader();
@@ -108,8 +108,8 @@ document.addEventListener("DOMContentLoaded", () => {
     formData.append("color", colorPicker.value);
     formData.append("file", blob, "frame.jpg");
 
-    if (modeSelect.value === "custom" && bgFileInput.files.length > 0) {
-      formData.append("bg_file", bgFileInput.files[0]);
+    if (modeSelect.value === "custom" && bgFile.files.length > 0) {
+      formData.append("bg_file", bgFile.files[0]);
     }
 
     try {
@@ -127,4 +127,29 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Frame error:", err);
     }
   }
+
+  if (!modeSelect) {
+    console.debug("webcam.js: modeSelect not found, aborting UI init");
+    return;
+  }
+
+  function updateControls() {
+    const mode = modeSelect.value;
+    if (mode === "color") {
+      if (colorPicker) colorPicker.style.display = "inline-block";
+      if (bgLabel) bgLabel.style.display = "none";
+      if (bgPreview) bgPreview.style.display = "none";
+    } else if (mode === "custom") {
+      if (colorPicker) colorPicker.style.display = "none";
+      if (bgLabel) bgLabel.style.display = "inline-block";
+    } else {
+      // transparent
+      if (colorPicker) colorPicker.style.display = "none";
+      if (bgLabel) bgLabel.style.display = "none";
+      if (bgPreview) bgPreview.style.display = "none";
+    }
+  }
+
+  modeSelect.addEventListener("change", updateControls);
+  updateControls();
 });
