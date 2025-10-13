@@ -13,6 +13,39 @@
     .btn-primary { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
     .btn-secondary { background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
     .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    .tab-toggle {
+  display: flex;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+  width: fit-content;
+  font-family: sans-serif;
+}
+
+.tab-toggle input[type="radio"] {
+  display: none;
+}
+
+.tab-toggle .tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  border-right: 2px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+.tab-toggle .tab:last-child {
+  border-right: none;
+}
+
+.tab-toggle input[type="radio"]:checked + .tab {
+  background-color: #28a745; /* Green highlight */
+  color: white;
+  font-weight: bold;
+}
   </style>
 </head>
 
@@ -28,9 +61,12 @@
       <form id="uploadForm">
 
         <!-- Option to choose input source -->
-        <div class="option-select">
-          <label><input type="radio" name="inputOption" value="upload" checked> Upload Image</label>
-          <label><input type="radio" name="inputOption" value="camera"> Take Photo</label>
+        <div class="tab-toggle">
+          <input type="radio" id="upload" name="inputOption" value="upload" checked>
+          <label for="upload" class="tab">Upload Image</label>
+
+          <input type="radio" id="camera" name="inputOption" value="camera">
+          <label for="camera" class="tab">Take Photo</label>
         </div>
 
         <!-- Upload Image Section -->
