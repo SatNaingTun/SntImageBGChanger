@@ -141,8 +141,38 @@ video { border-radius: 6px; border: 1px solid #ccc; }
 .center-column { display:flex; flex-direction:column; align-items:center; gap:8px; }
 .camera-container { display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:8px; }
 .field-col-start { display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
-.canvas-wrapper { display:flex; flex-direction:column; align-items:center; margin-top:10px; }
-.camera-canvas { border:1px solid #ccc; border-radius:6px; }
+
+/* --- Canvas Wrapper Control --- */
+.canvas-wrapper {
+  display: none;                /* hidden until image is shown */
+  justify-content: center;
+  align-items: center;
+  margin-top: 16px;
+  width: 100%;
+  overflow: hidden;             /* prevent large canvas from escaping card */
+}
+
+/* --- Canvas inside card --- */
+.camera-canvas {
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 90%;                   /* always smaller than card */
+  height: auto;
+  max-width: 800px;             /* upper limit inside 950px card */
+  max-height: 60vh;             /* also safe vertically */
+  object-fit: contain;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* hidden by default until JS toggles */
+.canvas-wrapper.hidden {
+  display: none !important;
+}
+
+/* JS can show it by adding .show */
+.canvas-wrapper.show {
+  display: flex !important;
+}
 
 /* Webcam page styles (scoped to body.webcam) */
 body.webcam {
