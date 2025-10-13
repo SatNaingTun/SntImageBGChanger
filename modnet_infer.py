@@ -138,41 +138,4 @@ def apply_modnet_cutout_rgba(frame_bgr):
 
     return rgba
 
-def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=None):
-    """
-    Real-time MODNet processing for webcam/video.
-    mode: "color", "custom", or "transparent"
-    """
-    alpha = run_modnet_video_inference(frame)  # grayscale mask (0–255)
-    alpha_3 = cv2.merge([alpha, alpha, alpha]) / 255.0
-    fg = frame.astype(np.float32) / 255.0
-    h, w, _ = frame.shape
-
-    if mode == "transparent":
-        result = cv2.cvtColor((fg * alpha_3 * 255).astype(np.uint8), cv2.COLOR_BGR2BGRA)
-        result[:, :, 3] = alpha
-        return result
-
-    elif mode == "custom" and bg_image is not None:
-        bg_resized = cv2.resize(bg_image, (w, h))
-        bg = bg_resized.astype(np.float32) / 255.0
-        result = (fg * alpha_3 + bg * (1 - alpha_3)) * 255
-        return result.astype(np.uint8)
-
-    else:  # default solid color
-        bg = np.full_like(frame, bgcolor, dtype=np.uint8).astype(np.float32) / 255.0
-        result = (fg * alpha_3 + bg * (1 - alpha_3)) * 255
-        return result.astype(np.uint8)
-
-
-def run_modnet_video_inference(frame):
-    """
-    Stub for MODNet video inference.
-    Replace with your real model inference.
-    """
-    h, w, _ = frame.shape
-    # Dummy alpha mask for testing
-    mask = np.zeros((h, w), dtype=np.uint8)
-    mask[h//4:h*3//4, w//4:w*3//4] = 255
-    return mask
 

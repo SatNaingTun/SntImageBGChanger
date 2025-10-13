@@ -1,7 +1,8 @@
 from fastapi import APIRouter, UploadFile, Form, File
 from pathlib import Path
 import cv2, numpy as np, base64, time
-from modnet_infer import apply_modnet_video     # ✅ new function name
+from modnet_infer_video import apply_modnet_video
+
 
 router = APIRouter(prefix="/api/video", tags=["AJAX Video API"])
 
