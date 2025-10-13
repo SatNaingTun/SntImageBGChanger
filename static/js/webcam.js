@@ -7,36 +7,70 @@ document.addEventListener("DOMContentLoaded", () => {
   const colorPicker = document.getElementById("colorPicker");
   const bgFileInput = document.getElementById("bg_file");
   const bgLabel = document.getElementById("bg_label");
+  const bgPreview = document.getElementById("bg_preview");
 
   let streaming = false;
   let intervalId = null;
 
-  // Show/hide background upload button
+  // 🧠 Mode change: show/hide background + color picker
   modeSelect.addEventListener("change", () => {
-    if (modeSelect.value === "custom") {
+    const mode = modeSelect.value;
+
+    if (mode === "custom") {
       bgLabel.style.display = "inline-block";
+      bgPreview.style.display = bgFileInput.files.length > 0 ? "inline-block" : "none";
+      colorPicker.style.display = "none";  // hide color when using custom BG
     } else {
       bgLabel.style.display = "none";
+      bgPreview.style.display = "none";
       bgFileInput.value = "";
+      bgPreview.src = "";
+      colorPicker.style.display = "inline-block";  // show color picker again
     }
   });
 
-  // Start/Stop webcam
+  // 🖼️ Preview uploaded background
+  bgFileInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        bgPreview.src = event.target.result;
+        bgPreview.style.display = "inline-block";
+      };
+      reader.readAsDataURL(file);
+    } else {
+      bgPreview.src = "";
+      bgPreview.style.display = "none";
+    }
+  });
+
+  // 🎥 Start/Stop webcam
   startBtn.addEventListener("click", async () => {
     if (!streaming) {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-      streaming = true;
-      startBtn.textContent = "Stop Webcam";
-      intervalId = setInterval(processFrame, 500); // ~2 FPS
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        video.srcObject = stream;
+        streaming = true;
+        startBtn.textContent = "⏹ Stop Webcam";
+        startBtn.classList.remove("btn-start");
+        startBtn.classList.add("btn-stop");
+        intervalId = setInterval(processFrame, 500);
+      } catch (err) {
+        alert("Webcam access denied: " + err.message);
+      }
     } else {
+      // stop webcam
       video.srcObject.getTracks().forEach((t) => t.stop());
       streaming = false;
-      startBtn.textContent = "Start Webcam";
+      startBtn.textContent = "🎥 Start Webcam";
+      startBtn.classList.remove("btn-stop");
+      startBtn.classList.add("btn-start");
       clearInterval(intervalId);
     }
   });
 
+  // 🧠 Frame processing
   async function processFrame() {
     if (!streaming || video.readyState !== 4) return;
 
@@ -57,7 +91,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (modeSelect.value === "custom" && bgFileInput.files.length > 0) {
       formData.append("bg_file", bgFileInput.files[0]);
-      console.log("🖼️ Custom background:", bgFileInput.files[0].name);
     }
 
     try {
