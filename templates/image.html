@@ -10,6 +10,9 @@
     .btn-bar { display: flex; gap: 10px; margin-top: 10px; }
     video { border-radius: 6px; border: 1px solid #ccc; }
     .option-select { display: flex; gap: 16px; margin-bottom: 10px; }
+    .btn-primary { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    .btn-secondary { background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
+    .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
   </style>
 </head>
 
@@ -40,14 +43,15 @@
 
         <!-- Camera Capture Section -->
         <div id="cameraSection" class="hidden">
-          <button type="button" class="btn btn-secondary" id="openCameraBtn">📷 Start Camera</button>
-          <div id="cameraContainer" class="hidden" style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px;">
-            <video id="cameraPreview" autoplay playsinline width="320" height="240"></video>
-            <div class="btn-bar">
-              <button type="button" class="btn btn-primary" id="captureBtn">📸 Capture</button>
-              <button type="button" class="btn btn-secondary" id="closeCameraBtn">❌ Close</button>
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <button type="button" class="btn btn-secondary" id="toggleCameraBtn">📷 Start Camera</button>
+            <div id="cameraContainer" class="hidden" style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px;">
+              <video id="cameraPreview" autoplay playsinline width="320" height="240"></video>
+              <div class="btn-bar">
+                <button type="button" class="btn btn-primary" id="captureBtn">📸 Capture</button>
+              </div>
+              <canvas id="cameraCanvas" width="320" height="240"></canvas>
             </div>
-            <canvas id="cameraCanvas" width="320" height="240"></canvas>
           </div>
         </div>
 
@@ -109,22 +113,21 @@
   <script src="/static/js/image.js"></script>
 
   <script>
-    // --- Camera integration and input selection ---
     document.addEventListener("DOMContentLoaded", () => {
       const inputOptions = document.querySelectorAll("input[name='inputOption']");
       const uploadSection = document.getElementById("uploadSection");
       const cameraSection = document.getElementById("cameraSection");
 
-      const openCameraBtn = document.getElementById("openCameraBtn");
+      const toggleCameraBtn = document.getElementById("toggleCameraBtn");
       const cameraContainer = document.getElementById("cameraContainer");
       const video = document.getElementById("cameraPreview");
       const canvas = document.getElementById("cameraCanvas");
       const captureBtn = document.getElementById("captureBtn");
-      const closeCameraBtn = document.getElementById("closeCameraBtn");
       const fileInput = document.getElementById("fileInput");
       const originalPreview = document.getElementById("originalPreview");
 
       let camera;
+      let cameraActive = false;
 
       // Toggle between upload and camera
       inputOptions.forEach(opt => {
@@ -139,21 +142,28 @@
         });
       });
 
-      // Camera controls
-      openCameraBtn.addEventListener("click", async () => {
-        cameraContainer.classList.remove("hidden");
-        if (!camera) {
-          const settings = new CameraSettings({ facing: "user", width: 640, height: 480 });
-          camera = new CameraController(video, settings);
+      // Single toggle button for camera start/stop
+      toggleCameraBtn.addEventListener("click", async () => {
+        if (!cameraActive) {
+          cameraContainer.classList.remove("hidden");
+          if (!camera) {
+            const settings = new CameraSettings({ facing: "user", width: 640, height: 480 });
+            camera = new CameraController(video, settings);
+          }
+          await camera.start();
+          cameraActive = true;
+          toggleCameraBtn.textContent = "❌ Stop Camera";
+          toggleCameraBtn.style.background = "#dc3545"; // red
+        } else {
+          if (camera) await camera.stop();
+          cameraContainer.classList.add("hidden");
+          cameraActive = false;
+          toggleCameraBtn.textContent = "📷 Start Camera";
+          toggleCameraBtn.style.background = "#6c757d"; // grey
         }
-        await camera.start();
       });
 
-      closeCameraBtn.addEventListener("click", async () => {
-        if (camera) await camera.stop();
-        cameraContainer.classList.add("hidden");
-      });
-
+      // Capture button
       captureBtn.addEventListener("click", () => {
         const ctx = canvas.getContext("2d");
         canvas.width = video.videoWidth;
@@ -166,12 +176,8 @@
           dataTransfer.items.add(file);
           fileInput.files = dataTransfer.files;
 
-          // Show captured photo as preview
           originalPreview.src = URL.createObjectURL(file);
-
           alert("✅ Photo captured and ready to process!");
-          camera.stop();
-          cameraContainer.classList.add("hidden");
         }, "image/jpeg");
       });
     });
