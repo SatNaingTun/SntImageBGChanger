@@ -60,14 +60,17 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (data.error) throw new Error(data.error);
 
-      // Small delay to ensure FastAPI has finished writing files
+      // Small delay to ensure FastAPI finished writing files
       await new Promise((r) => setTimeout(r, 300));
 
       // Force fresh fetch (avoid browser cache)
       const ts = "?t=" + new Date().getTime();
       originalPreview.src = data.original + ts;
       resultPreview.src = data.result + ts;
-      downloadLink.href = data.download + ts;
+
+      // Store download URL for later
+      downloadLink.dataset.downloadUrl = data.download;
+      downloadLink.dataset.filename = data.download.split("/").pop();
 
       previewSection.style.opacity = "1";
       buttons.classList.remove("hidden");
@@ -79,7 +82,40 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Reset form
+  // ✅ Download handler with Save File dialog
+  downloadLink.addEventListener("click", async (e) => {
+  e.preventDefault();
+
+  const url = downloadLink.dataset.downloadUrl;
+  const filename = downloadLink.dataset.filename || "changed_image.jpg";
+  if (!url) return alert("No file available for download.");
+
+  try {
+    // Step 1: fetch the image blob BEFORE user click finishes
+    const res = await fetch(url + "?t=" + Date.now());
+    const blob = await res.blob();
+
+    // Step 2: Immediately create a download link (still within click event)
+    const a = document.createElement("a");
+    const objectUrl = URL.createObjectURL(blob);
+    a.href = objectUrl;
+    a.download = filename;
+    a.style.display = "none";
+    document.body.appendChild(a);
+
+    // Force synchronous download trigger (browser safe)
+    setTimeout(() => {
+      a.click();
+      URL.revokeObjectURL(objectUrl);
+      a.remove();
+    }, 0);
+  } catch (err) {
+    console.error("❌ Download failed:", err);
+    alert("Failed to download image.");
+  }
+});
+
+// Reset form
   resetBtn.addEventListener("click", () => {
     form.reset();
     previewSection.classList.add("hidden");

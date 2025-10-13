@@ -1,122 +1,98 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Webcam Background Changer (MODNet)</title>
-  <link rel="stylesheet" href="/static/css/styles.css" />
+  <meta charset="utf-8">
+  <title>Live Webcam Background Changer (MODNet)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .video-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 15px;
+    }
+
+    .video-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 45%;
+      min-width: 280px;
+    }
+
+    video, img {
+      width: 100%;
+      max-width: 480px;
+      border-radius: 10px;
+      box-shadow: 0 0 8px rgba(0,0,0,0.2);
+      background: #eee;
+      object-fit: cover;
+    }
+
+    .label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin: 5px 0;
+      text-align: center;
+    }
+
+    @media (max-width: 768px) {
+      .video-grid {
+        flex-direction: column;
+        align-items: center;
+      }
+      .video-box {
+        width: 90%;
+      }
+    }
+  </style>
 </head>
+
 <body>
   <main class="page">
     <section class="card">
-      <h2>Webcam Background Changer (MODNet)</h2>
-      <p class="subtitle">Select live camera or apply MODNet with your chosen background color or image</p>
+      <h2>Live Webcam Background Changer (MODNet)</h2>
 
-      <!-- Control buttons -->
       <div class="controls">
-        <button id="btnDirect" class="btn-primary">Direct Camera</button>
-        <button id="btnChange" class="btn-primary">Change Background</button>
-        <button id="btnStop" class="btn-danger">Stop</button>
+        <select id="modeSelect">
+          <option value="color" selected>Solid Color</option>
+          <option value="custom">Custom Background</option>
+          <option value="transparent">Remove Background</option>
+        </select>
+
+        <input type="color" id="colorPicker" value="#00ff00">
+        <input type="file" id="bg_file" accept="image/*" style="display:none;">
+        <button id="startBtn" class="btn btn-primary">🎥 Start Webcam</button>
       </div>
 
-      <!-- Camera views -->
-      <div class="video-wrap" style="margin-top:16px;">
-        <h3 id="modeTitle">Camera Preview</h3>
-        <video id="preview" autoplay playsinline muted style="width:100%;border-radius:10px;"></video>
-        <img id="processed" style="width:100%;display:none;border-radius:10px;" alt="Processed Output" />
+      <div class="video-grid">
+        <div class="video-box">
+          <div class="label">Original Webcam</div>
+          <video id="video" autoplay playsinline></video>
+        </div>
+
+        <div class="video-box">
+          <div class="label">Processed Output</div>
+          <img id="output" alt="Processed Output">
+        </div>
       </div>
 
-      <!-- Background options -->
-      <h3 style="margin-top:16px;">Background Options</h3>
-      <div class="settings">
-        <label class="field">
-          <span>Pick Solid Color</span>
-          <input type="color" id="colorPicker" value="#ffffff" style="height:48px;width:100%;" />
-        </label>
-        <button id="btnColor" class="btn-primary">Apply Selected Color</button>
-
-        <label class="field">
-          <span>Upload Custom Image</span>
-          <input type="file" id="bgFile" accept="image/*" />
-        </label>
-        <button id="btnUpload" class="btn-primary">Use Uploaded Background</button>
-      </div>
-
-      <p class="notes"><a href="/">← Back to Home</a></p>
+      <canvas id="canvas" class="hidden"></canvas>
     </section>
   </main>
 
-  <script>
-  let stream=null, ws=null, timer=null, canvas=null, ctx=null;
-  const video=document.getElementById("preview");
-  const processed=document.getElementById("processed");
-  const modeTitle=document.getElementById("modeTitle");
-
-  async function startDirect(){
-    stopAll();
-    modeTitle.textContent="Direct Camera";
-    processed.style.display="none";
-    video.style.display="block";
-    stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
-    video.srcObject=stream;
-  }
-
-  async function startChange(){
-    stopAll();
-    modeTitle.textContent="Background Changed";
-    processed.style.display="block";
-    video.style.display="block";
-    stream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
-    video.srcObject=stream;
-    canvas=document.createElement("canvas");
-    ctx=canvas.getContext("2d");
-    const proto=location.protocol==="https:"?"wss":"ws";
-    ws=new WebSocket(`${proto}://${location.host}/ws/modnet`);
-    ws.binaryType="arraybuffer";
-    ws.onmessage=(ev)=>{
-      const blob=new Blob([ev.data],{type:"image/jpeg"});
-      processed.src=URL.createObjectURL(blob);
-    };
-    ws.onopen=()=>{
-      timer=setInterval(()=>{
-        if(ws.readyState!==1)return;
-        canvas.width=video.videoWidth;
-        canvas.height=video.videoHeight;
-        ctx.drawImage(video,0,0,canvas.width,canvas.height);
-        canvas.toBlob((blob)=>{
-          blob.arrayBuffer().then(buf=>ws.send(buf));
-        },"image/jpeg",0.7);
-      },200);
-    };
-  }
-
-  function stopAll(){
-    if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
-    if(ws){ws.close();ws=null;}
-    if(timer){clearInterval(timer);timer=null;}
-  }
-
-  // === Background Controls ===
-  document.getElementById("btnColor").onclick=async ()=>{
-    const color=document.getElementById("colorPicker").value;
-    const formData=new URLSearchParams();
-    formData.append("color",color);
-    await fetch("/api/background/solid",{method:"POST",body:formData});
-    alert(`Solid background color applied: ${color}`);
-  };
-
-  document.getElementById("btnUpload").onclick=async ()=>{
-    const file=document.getElementById("bgFile").files[0];
-    if(!file){alert("Please choose an image first.");return;}
-    const formData=new FormData();
-    formData.append("file",file);
-    await fetch("/api/background/upload",{method:"POST",body:formData});
-    alert("Custom background image uploaded!");
-  };
-
-  document.getElementById("btnDirect").onclick=startDirect;
-  document.getElementById("btnChange").onclick=startChange;
-  document.getElementById("btnStop").onclick=stopAll;
-  </script>
+  <script src="/static/js/webcam.js"></script>
 </body>
 </html>

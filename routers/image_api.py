@@ -102,3 +102,4 @@ async def process_image(
         import traceback
         traceback.print_exc()
         return JSONResponse({"error": str(e)}, status_code=500)
+
