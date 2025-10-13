@@ -23,3 +23,83 @@ background-size:20px 20px;border-radius:8px;}
 .image-box img{width:100%;max-height:420px;object-fit:contain;border-radius:8px;background:#fff;}
 .hidden{display:none;}
 #loading{text-align:center;margin-top:1rem;color:#007bff;font-weight:bold;}
+ #record-gallery {
+    margin: 25px auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    max-width: 1000px;
+    padding: 10px;
+  }
+
+  .record-card {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+  }
+
+  .record-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+  }
+
+  .record-thumb {
+    width: 100%;
+    height: 130px;
+    object-fit: cover;
+    display: block;
+    background: #000;
+  }
+
+  .record-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+  }
+
+  .record-actions a {
+    text-decoration: none;
+    font-size: 0.85rem;
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: white;
+  }
+
+  .btn-play {
+    background: #2196f3;
+  }
+
+  .btn-download {
+    background: #4caf50;
+  }
+
+  .record-date {
+    font-size: 0.8rem;
+    color: #555;
+    text-align: center;
+    padding-bottom: 6px;
+  }
+
+  @media (max-width: 600px) {
+    #record-gallery {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .btn-delete {
+  background: #e53935;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.btn-delete:hover {
+  background: #c62828;
+}
+

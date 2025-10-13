@@ -13,6 +13,8 @@ __pycache__/main.cpython-313.pyc
 video/changed/
 video/changed/*.*
 video/*.*
+video/recorded/
+video/recorded/*.*
 
 
 # images/upload/Sat Naing Tun-1x1.5.tif

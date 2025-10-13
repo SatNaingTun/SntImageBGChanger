@@ -2,10 +2,44 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Live Webcam Background Changer (MODNet)</title>
+  <title>🎥 Live Webcam Background Changer (MODNet)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/static/css/style.css">
+
   <style>
+    /* ===========================
+       🎨 MAIN LAYOUT
+    ============================ */
+    body {
+      font-family: "Segoe UI", Roboto, sans-serif;
+      background: #f5f6fa;
+      color: #333;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+    }
+
+    main.page {
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    section.card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+
+    /* ===========================
+       🎛️ CONTROLS
+    ============================ */
     .controls {
       display: flex;
       flex-wrap: wrap;
@@ -15,12 +49,38 @@
       margin-bottom: 10px;
     }
 
+    .btn {
+      padding: 6px 12px;
+      border-radius: 6px;
+      border: none;
+      cursor: pointer;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    .btn-start { background: #4caf50; }
+    .btn-stop { background: #d9534f; }
+    .btn-record { background: #2196f3; }
+    .btn-record-stop { background: #f44336; }
+    .btn-gallery { background: #6c757d; }
+
+    #bg_preview {
+      width: 60px;
+      height: 40px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      display: none;
+    }
+
+    /* ===========================
+       📷 VIDEO LAYOUT
+    ============================ */
     .video-grid {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      align-items: flex-start;
-      gap: 12px;
+      gap: 20px;
       margin-top: 15px;
     }
 
@@ -35,58 +95,22 @@
     video, img {
       width: 100%;
       max-width: 480px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.2);
-      background: #eee;
+      border-radius: 12px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+      background: #000;
       object-fit: cover;
     }
 
     .label {
-      font-size: 0.9rem;
       font-weight: 600;
-      margin: 5px 0;
+      margin: 8px 0;
       text-align: center;
     }
 
-    /* buttons */
-    .btn {
-      padding: 6px 10px;
-      border: 1px solid #ccc;
-      background: #f8f8f8;
-      border-radius: 6px;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .btn:hover { background: #eaeaea; }
-
-    .btn-start {
-      background-color: #4caf50;  /* green */
-      color: white;
-      border: none;
-    }
-
-    .btn-stop {
-      background-color: #d9534f;  /* red */
-      color: white;
-      border: none;
-    }
-
-    .btn-start:hover { background-color: #43a047; }
-    .btn-stop:hover { background-color: #c9302c; }
-
-    #bg_preview {
-      width: 60px;
-      height: 40px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      display: none;
-    }
-
-    @media (max-width: 768px) {
-      .video-grid { flex-direction: column; align-items: center; }
-      .video-box { width: 90%; }
+    @media (max-width: 600px) {
+      .video-box {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -94,8 +118,9 @@
 <body>
   <main class="page">
     <section class="card">
-      <h2>Live Webcam Background Changer (MODNet)</h2>
+      <h2>🎥 Live Webcam Background Changer (MODNet)</h2>
 
+      <!-- 🎛️ Top Controls -->
       <div class="controls">
         <select id="modeSelect">
           <option value="color" selected>Solid Color</option>
@@ -104,15 +129,21 @@
         </select>
 
         <input type="color" id="colorPicker" value="#00ff00">
-
-        <!-- upload bg -->
-        <label id="bg_label" for="bg_file" class="btn" style="display:none;">Upload BG Image</label>
+        <label id="bg_label" for="bg_file" class="btn" style="background:#777;">Upload BG</label>
         <input type="file" id="bg_file" accept="image/*" style="display:none;">
         <img id="bg_preview" alt="BG Preview">
 
         <button id="startBtn" class="btn btn-start">🎥 Start Webcam</button>
+        <a href="/gallery" class="btn btn-gallery">🖼 View Gallery</a>
       </div>
 
+      <!-- 🎬 Recording Controls -->
+      <div class="controls">
+        <button id="recordBtn" class="btn btn-record">⏺ Start Recording</button>
+        <button id="stopRecordBtn" class="btn btn-record-stop" style="display:none;">⏹ Stop Recording</button>
+      </div>
+
+      <!-- 📷 Webcam + Processed Output -->
       <div class="video-grid">
         <div class="video-box">
           <div class="label">Original Webcam</div>
@@ -125,9 +156,11 @@
       </div>
 
       <canvas id="canvas" class="hidden"></canvas>
+      <canvas id="recordCanvas" style="display:none;"></canvas>
     </section>
   </main>
 
   <script src="/static/js/webcam.js"></script>
+  <script src="/static/js/record.js"></script>
 </body>
 </html>
