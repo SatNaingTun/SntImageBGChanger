@@ -7,9 +7,9 @@
   <link rel="stylesheet" href="/static/css/style.css">
   <style>
     .hidden { display: none; }
-    video { border-radius: 6px; }
-    canvas { display: none; }
     .btn-bar { display: flex; gap: 10px; margin-top: 10px; }
+    video { border-radius: 6px; border: 1px solid #ccc; }
+    .option-select { display: flex; gap: 16px; margin-bottom: 10px; }
   </style>
 </head>
 
@@ -18,22 +18,31 @@
     <section class="card">
       <h2>Image Background Changer (MODNet)</h2>
       <p class="subtitle">
-        Upload your portrait or take a new photo, choose a background mode (color, custom, transparent), and view instantly.
+        Choose how to provide your portrait: upload an image or take a photo using your camera.
       </p>
 
       <!-- Upload Form -->
       <form id="uploadForm">
-        <!-- Portrait Upload -->
-        <label>
-          Upload Image
-          <input type="file" name="file" id="fileInput" accept="image/*">
-        </label>
 
-        <!-- OR Take Photo Section -->
-        <div id="cameraSection" style="margin-top:10px;">
-          <button type="button" class="btn btn-secondary" id="openCameraBtn">📷 Take Photo</button>
+        <!-- Option to choose input source -->
+        <div class="option-select">
+          <label><input type="radio" name="inputOption" value="upload" checked> Upload Image</label>
+          <label><input type="radio" name="inputOption" value="camera"> Take Photo</label>
+        </div>
+
+        <!-- Upload Image Section -->
+        <div id="uploadSection">
+          <label>
+            Select Image File
+            <input type="file" name="file" id="fileInput" accept="image/*">
+          </label>
+        </div>
+
+        <!-- Camera Capture Section -->
+        <div id="cameraSection" class="hidden">
+          <button type="button" class="btn btn-secondary" id="openCameraBtn">📷 Start Camera</button>
           <div id="cameraContainer" class="hidden" style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px;">
-            <video id="cameraPreview" autoplay playsinline width="320" height="240" style="border:1px solid #ccc;"></video>
+            <video id="cameraPreview" autoplay playsinline width="320" height="240"></video>
             <div class="btn-bar">
               <button type="button" class="btn btn-primary" id="captureBtn">📸 Capture</button>
               <button type="button" class="btn btn-secondary" id="closeCameraBtn">❌ Close</button>
@@ -100,8 +109,12 @@
   <script src="/static/js/image.js"></script>
 
   <script>
-    // Add camera integration logic
+    // --- Camera integration and input selection ---
     document.addEventListener("DOMContentLoaded", () => {
+      const inputOptions = document.querySelectorAll("input[name='inputOption']");
+      const uploadSection = document.getElementById("uploadSection");
+      const cameraSection = document.getElementById("cameraSection");
+
       const openCameraBtn = document.getElementById("openCameraBtn");
       const cameraContainer = document.getElementById("cameraContainer");
       const video = document.getElementById("cameraPreview");
@@ -113,6 +126,20 @@
 
       let camera;
 
+      // Toggle between upload and camera
+      inputOptions.forEach(opt => {
+        opt.addEventListener("change", () => {
+          if (opt.value === "upload" && opt.checked) {
+            uploadSection.classList.remove("hidden");
+            cameraSection.classList.add("hidden");
+          } else if (opt.value === "camera" && opt.checked) {
+            uploadSection.classList.add("hidden");
+            cameraSection.classList.remove("hidden");
+          }
+        });
+      });
+
+      // Camera controls
       openCameraBtn.addEventListener("click", async () => {
         cameraContainer.classList.remove("hidden");
         if (!camera) {
@@ -139,7 +166,7 @@
           dataTransfer.items.add(file);
           fileInput.files = dataTransfer.files;
 
-          // Preview captured image
+          // Show captured photo as preview
           originalPreview.src = URL.createObjectURL(file);
 
           alert("✅ Photo captured and ready to process!");
