@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let streaming = false;
   let intervalId = null;
+  let sessionId = 0; // 🆕 Used to ignore late frames
 
   // 🧠 Mode change: show/hide background + color picker
   modeSelect.addEventListener("change", () => {
@@ -19,13 +20,13 @@ document.addEventListener("DOMContentLoaded", () => {
     if (mode === "custom") {
       bgLabel.style.display = "inline-block";
       bgPreview.style.display = bgFileInput.files.length > 0 ? "inline-block" : "none";
-      colorPicker.style.display = "none";  // hide color when using custom BG
+      colorPicker.style.display = "none"; // hide color picker for custom BG
     } else {
       bgLabel.style.display = "none";
       bgPreview.style.display = "none";
       bgFileInput.value = "";
       bgPreview.src = "";
-      colorPicker.style.display = "inline-block";  // show color picker again
+      colorPicker.style.display = "inline-block"; // show color picker again
     }
   });
 
@@ -52,26 +53,44 @@ document.addEventListener("DOMContentLoaded", () => {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         video.srcObject = stream;
         streaming = true;
+        sessionId = Date.now(); // 🆕 new session ID
         startBtn.textContent = "⏹ Stop Webcam";
         startBtn.classList.remove("btn-start");
         startBtn.classList.add("btn-stop");
-        intervalId = setInterval(processFrame, 500);
+        intervalId = setInterval(() => processFrame(sessionId), 500);
       } catch (err) {
         alert("Webcam access denied: " + err.message);
       }
     } else {
-      // stop webcam
-      video.srcObject.getTracks().forEach((t) => t.stop());
+      // 🧹 Stop webcam
+      if (video.srcObject) {
+        video.srcObject.getTracks().forEach((t) => t.stop());
+      }
       streaming = false;
+
+      // 🧩 Invalidate session so late frames are ignored
+      sessionId = 0;
+
+      // Stop interval
+      clearInterval(intervalId);
+      intervalId = null;
+
+      // 🎨 Reset UI
       startBtn.textContent = "🎥 Start Webcam";
       startBtn.classList.remove("btn-stop");
       startBtn.classList.add("btn-start");
-      clearInterval(intervalId);
+
+      // 🕶️ Set Processed Output to black immediately
+      const blackPixel =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQoBAQfz7W4AAAAASUVORK5CYII=";
+      output.src = blackPixel;
+      output.alt = "Processed Output (Stopped)";
+      console.log("🧹 Webcam stopped, output set to black.");
     }
   });
 
-  // 🧠 Frame processing
-  async function processFrame() {
+  // 🧠 Frame processing (with session check)
+  async function processFrame(currentSession) {
     if (!streaming || video.readyState !== 4) return;
 
     const ctx = canvas.getContext("2d");
@@ -99,6 +118,10 @@ document.addEventListener("DOMContentLoaded", () => {
         body: formData,
       });
       const data = await res.json();
+
+      // 🧩 Ignore late responses (from previous session)
+      if (!streaming || currentSession !== sessionId) return;
+
       if (data.result) output.src = data.result;
     } catch (err) {
       console.error("Frame error:", err);
