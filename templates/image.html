@@ -5,44 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Image Background Changer (MODNet)</title>
   <link rel="stylesheet" href="/static/css/style.css">
-  <style>
-    .hidden { display: none; }
-    .btn-bar { display: flex; gap: 10px; margin-top: 10px; }
-    video { border-radius: 6px; border: 1px solid #ccc; }
-    .option-select { display: flex; gap: 16px; margin-bottom: 10px; }
-    .btn-primary { background: #007bff; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-    .btn-secondary { background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-    .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
-    .tab-toggle {
-      display: flex;
-      border: 2px solid #ccc;
-      border-radius: 6px;
-      overflow: hidden;
-      width: fit-content;
-      font-family: sans-serif;
-    }
-    .tab-toggle input[type="radio"] {
-      display: none;
-    }
-    .tab-toggle .tab {
-      padding: 10px 20px;
-      cursor: pointer;
-      flex: 1;
-      text-align: center;
-      border-right: 2px solid #ccc;
-      background-color: #fff;
-      color: #333;
-      transition: background-color 0.3s, color 0.3s;
-    }
-    .tab-toggle .tab:last-child {
-      border-right: none;
-    }
-    .tab-toggle input[type="radio"]:checked + .tab {
-      background-color: #28a745; /* Green highlight */
-      color: white;
-      font-weight: bold;
-    }
-  </style>
 </head>
 
 <body>
@@ -75,9 +37,9 @@
 
         <!-- Camera Capture Section -->
         <div id="cameraSection" class="hidden">
-          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+          <div class="center-column">
             <button type="button" class="btn btn-secondary" id="toggleCameraBtn">📷 Start Camera</button>
-            <div id="cameraContainer" class="hidden" style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:8px;">
+            <div id="cameraContainer" class="hidden camera-container">
               <video id="cameraPreview" autoplay playsinline width="320" height="240"></video>
               <div class="btn-bar">
                 <button type="button" class="btn btn-primary" id="captureBtn">📸 Capture</button>
@@ -87,8 +49,8 @@
         </div>
 
         <!-- Canvas (shared preview for both upload & capture) -->
-        <div id="canvasWrapper" class="hidden" style="display:flex;flex-direction:column;align-items:center;margin-top:10px;">
-          <canvas id="cameraCanvas" width="320" height="240" style="border:1px solid #ccc;border-radius:6px;"></canvas>
+        <div id="canvasWrapper" class="hidden canvas-wrapper">
+          <canvas id="cameraCanvas" width="320" height="240" class="camera-canvas"></canvas>
         </div>
 
         <!-- Mode Selection -->
@@ -102,13 +64,13 @@
         </label>
 
         <!-- Color Picker -->
-        <label id="colorField" style="display:flex;flex-direction:column;align-items:flex-start;gap:6px;">
+        <label id="colorField" class="field-col-start">
           Choose Background Color
           <input type="color" name="color" id="colorPicker" value="#ffffff">
         </label>
 
         <!-- Custom Background Upload -->
-        <label id="bgUploadField" style="display:none;flex-direction:column;align-items:flex-start;gap:6px;">
+        <label id="bgUploadField" class="field-col-start" style="display:none;">
           Upload Background Image
           <input type="file" name="bg_file" id="bg_file" accept="image/*">
         </label>
@@ -147,100 +109,5 @@
   <!-- External JS -->
   <script src="/static/js/camera.js"></script>
   <script src="/static/js/image.js"></script>
-
-  <script>
-    document.addEventListener("DOMContentLoaded", () => {
-      const inputOptions = document.querySelectorAll("input[name='inputOption']");
-      const uploadSection = document.getElementById("uploadSection");
-      const cameraSection = document.getElementById("cameraSection");
-      const toggleCameraBtn = document.getElementById("toggleCameraBtn");
-      const cameraContainer = document.getElementById("cameraContainer");
-      const video = document.getElementById("cameraPreview");
-      const canvas = document.getElementById("cameraCanvas");
-      const canvasWrapper = document.getElementById("canvasWrapper");
-      const captureBtn = document.getElementById("captureBtn");
-      const fileInput = document.getElementById("fileInput");
-      const originalPreview = document.getElementById("originalPreview");
-
-      let camera;
-      let cameraActive = false;
-
-      // Toggle between upload and camera
-      inputOptions.forEach(opt => {
-        opt.addEventListener("change", () => {
-          if (opt.value === "upload" && opt.checked) {
-            uploadSection.classList.remove("hidden");
-            cameraSection.classList.add("hidden");
-          } else if (opt.value === "camera" && opt.checked) {
-            uploadSection.classList.add("hidden");
-            cameraSection.classList.remove("hidden");
-          }
-        });
-      });
-
-      // Camera start/stop toggle
-      toggleCameraBtn.addEventListener("click", async () => {
-        if (!cameraActive) {
-          cameraContainer.classList.remove("hidden");
-          if (!camera) {
-            const settings = new CameraSettings({ facing: "user", width: 640, height: 480 });
-            camera = new CameraController(video, settings);
-          }
-          await camera.start();
-          cameraActive = true;
-          toggleCameraBtn.textContent = "❌ Stop Camera";
-          toggleCameraBtn.style.background = "#dc3545";
-        } else {
-          if (camera) await camera.stop();
-          cameraContainer.classList.add("hidden");
-          cameraActive = false;
-          toggleCameraBtn.textContent = "📷 Start Camera";
-          toggleCameraBtn.style.background = "#6c757d";
-        }
-      });
-
-      // Function to draw image (upload or capture)
-      function drawToCanvas(imageSource) {
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.onload = () => {
-          canvas.width = img.width;
-          canvas.height = img.height;
-          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-          canvasWrapper.classList.remove("hidden");
-          originalPreview.src = canvas.toDataURL("image/jpeg");
-        };
-        img.src = imageSource;
-      }
-
-      // Upload → draw to canvas
-      fileInput.addEventListener("change", (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          const imageURL = URL.createObjectURL(file);
-          drawToCanvas(imageURL);
-        }
-      });
-
-      // Capture → draw to canvas
-      captureBtn.addEventListener("click", () => {
-        const ctx = canvas.getContext("2d");
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-        canvas.toBlob((blob) => {
-          const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
-          const dataTransfer = new DataTransfer();
-          dataTransfer.items.add(file);
-          fileInput.files = dataTransfer.files;
-
-          const imageURL = URL.createObjectURL(file);
-          drawToCanvas(imageURL);
-          alert("✅ Photo captured and ready to process!");
-        }, "image/jpeg");
-      });
-    });
-  </script>
 </body>
 </html>

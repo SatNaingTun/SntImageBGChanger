@@ -103,3 +103,44 @@ background-size:20px 20px;border-radius:8px;}
   background: #c62828;
 }
 
+/* Moved from templates/image.html */
+video { border-radius: 6px; border: 1px solid #ccc; }
+
+.option-select { display: flex; gap: 16px; margin-bottom: 10px; }
+
+/* Tab toggle (input+label based tabs) */
+.tab-toggle {
+  display: flex;
+  border: 2px solid #ccc;
+  border-radius: 6px;
+  overflow: hidden;
+  width: fit-content;
+  font-family: sans-serif;
+}
+.tab-toggle input[type="radio"] {
+  display: none;
+}
+.tab-toggle .tab {
+  padding: 10px 20px;
+  cursor: pointer;
+  flex: 1;
+  text-align: center;
+  border-right: 2px solid #ccc;
+  background-color: #fff;
+  color: #333;
+  transition: background-color 0.3s, color 0.3s;
+}
+.tab-toggle .tab:last-child { border-right: none; }
+.tab-toggle input[type="radio"]:checked + .tab {
+  background-color: #28a745; /* Green highlight */
+  color: white;
+  font-weight: bold;
+}
+
+/* Helper layout classes (replace inline styles) */
+.center-column { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.camera-container { display:flex; flex-direction:column; align-items:center; gap:8px; margin-top:8px; }
+.field-col-start { display:flex; flex-direction:column; align-items:flex-start; gap:6px; }
+.canvas-wrapper { display:flex; flex-direction:column; align-items:center; margin-top:10px; }
+.camera-canvas { border:1px solid #ccc; border-radius:6px; }
+
