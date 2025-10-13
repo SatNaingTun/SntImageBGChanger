@@ -22,13 +22,11 @@ document.addEventListener("DOMContentLoaded", () => {
         div.className = "item";
 
         if (item.type === "video") {
-          // 🎞 Show thumbnail image first
+          // Thumbnail preview
           const img = document.createElement("img");
           img.className = "thumb";
           img.dataset.src = item.thumbnail;
-          img.alt = "Video thumbnail";
-
-          // ▶ On click, replace image with playable video
+          img.alt = "video thumbnail";
           img.addEventListener("click", () => {
             const video = document.createElement("video");
             video.src = item.path;
@@ -38,10 +36,8 @@ document.addEventListener("DOMContentLoaded", () => {
             video.style.height = "180px";
             div.replaceChild(video, img);
           });
-
           div.appendChild(img);
         } else {
-          // 🖼 Snapshot
           const img = document.createElement("img");
           img.className = "thumb";
           img.dataset.src = item.thumbnail;
@@ -57,7 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
         div.appendChild(actions);
 
-        // 🗑 Delete functionality
+        // Delete handler
         actions.querySelector(".btn-delete").addEventListener("click", async () => {
           if (!confirm("Delete this item?")) return;
           const res = await fetch(`/api/gallery/delete/${item.name}`, { method: "DELETE" });
@@ -67,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
         gallery.appendChild(div);
       });
 
-      // 💤 Lazy-load thumbnails
+      // Lazy-load thumbnails
       if (observer) observer.disconnect();
       observer = new IntersectionObserver(entries => {
         entries.forEach(entry => {
@@ -81,7 +77,6 @@ document.addEventListener("DOMContentLoaded", () => {
           }
         });
       });
-
       document.querySelectorAll(".thumb[data-src]").forEach(el => observer.observe(el));
 
     } catch (err) {
@@ -90,7 +85,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 🔁 Auto-refresh every 10 seconds
+  // 🌍 Make function globally available for external trigger
+  window.refreshGallery = loadGallery;
+
+  // Initial + auto-refresh
   loadGallery();
   setInterval(loadGallery, 10000);
 });

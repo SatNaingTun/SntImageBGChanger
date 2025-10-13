@@ -148,8 +148,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     img.onload = async () => {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      // Convert to Blob and upload to backend
       canvas.toBlob(async (blob) => {
         const formData = new FormData();
         formData.append("snapshot", blob, `snapshot_${Date.now()}.jpg`);
@@ -164,6 +162,9 @@ document.addEventListener("DOMContentLoaded", () => {
           if (res.ok) {
             showToast("✅ Snapshot uploaded!");
             console.log("📸 Saved:", data.path);
+
+            // 🧠 Instantly refresh gallery if open
+            if (window.refreshGallery) window.refreshGallery();
           } else {
             showToast("⚠️ Snapshot upload failed");
           }
