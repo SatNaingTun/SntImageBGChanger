@@ -104,3 +104,15 @@ async def delete_recording(filename: str):
         return {"message": "Recording deleted", "deleted": filename}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete {filename}: {e}")
+
+@router.post("/snapshot/upload")
+async def upload_snapshot(snapshot: UploadFile = File(...)):
+    """
+    Save uploaded snapshot (.jpg)
+    """
+    SNAPSHOT_DIR = Path("video/snapshots")
+    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = SNAPSHOT_DIR / snapshot.filename
+    with open(file_path, "wb") as f:
+        f.write(await snapshot.read())
+    return {"message": "Snapshot saved", "path": f"/video/snapshots/{snapshot.filename}"}

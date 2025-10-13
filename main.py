@@ -7,7 +7,7 @@ from fastapi.staticfiles import StaticFiles
 
 from routers import webcam, stream_modnet, background_api, image_page, modenet_api
 
-from routers import video_api, image_api,record_api
+from routers import video_api, image_api,record_api,gallery_api
 
 # Import routers from subpackage
 from routers import webcam
@@ -40,6 +40,7 @@ app.mount("/images/changed", NoCacheStaticFiles(directory="images/changed"), nam
 app.mount("/images/background", NoCacheStaticFiles(directory="images/background"), name="background")
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+app.mount("/video", StaticFiles(directory="video"), name="video") 
 templates = Jinja2Templates(directory="templates")
 
 app.mount("/video/changed", StaticFiles(directory="video/changed"), name="video_changed")
@@ -53,6 +54,7 @@ app.include_router(stream_modnet.router)
 app.include_router(background_api.router)
 app.include_router(modenet_api.router)
 app.include_router(image_page.router)
+app.include_router(gallery_api.router)
 
 
 @app.get("/", response_class=HTMLResponse)
