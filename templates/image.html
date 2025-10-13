@@ -14,38 +14,34 @@
     .btn-secondary { background: #6c757d; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
     .btn-success { background: #28a745; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; }
     .tab-toggle {
-  display: flex;
-  border: 2px solid #ccc;
-  border-radius: 6px;
-  overflow: hidden;
-  width: fit-content;
-  font-family: sans-serif;
-}
-
-.tab-toggle input[type="radio"] {
-  display: none;
-}
-
-.tab-toggle .tab {
-  padding: 10px 20px;
-  cursor: pointer;
-  flex: 1;
-  text-align: center;
-  border-right: 2px solid #ccc;
-  background-color: #fff;
-  color: #333;
-  transition: background-color 0.3s, color 0.3s;
-}
-
-.tab-toggle .tab:last-child {
-  border-right: none;
-}
-
-.tab-toggle input[type="radio"]:checked + .tab {
-  background-color: #28a745; /* Green highlight */
-  color: white;
-  font-weight: bold;
-}
+      display: flex;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+      overflow: hidden;
+      width: fit-content;
+      font-family: sans-serif;
+    }
+    .tab-toggle input[type="radio"] {
+      display: none;
+    }
+    .tab-toggle .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      flex: 1;
+      text-align: center;
+      border-right: 2px solid #ccc;
+      background-color: #fff;
+      color: #333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    .tab-toggle .tab:last-child {
+      border-right: none;
+    }
+    .tab-toggle input[type="radio"]:checked + .tab {
+      background-color: #28a745; /* Green highlight */
+      color: white;
+      font-weight: bold;
+    }
   </style>
 </head>
 
@@ -86,9 +82,13 @@
               <div class="btn-bar">
                 <button type="button" class="btn btn-primary" id="captureBtn">📸 Capture</button>
               </div>
-              <canvas id="cameraCanvas" width="320" height="240"></canvas>
             </div>
           </div>
+        </div>
+
+        <!-- Canvas (shared preview for both upload & capture) -->
+        <div id="canvasWrapper" class="hidden" style="display:flex;flex-direction:column;align-items:center;margin-top:10px;">
+          <canvas id="cameraCanvas" width="320" height="240" style="border:1px solid #ccc;border-radius:6px;"></canvas>
         </div>
 
         <!-- Mode Selection -->
@@ -153,11 +153,11 @@
       const inputOptions = document.querySelectorAll("input[name='inputOption']");
       const uploadSection = document.getElementById("uploadSection");
       const cameraSection = document.getElementById("cameraSection");
-
       const toggleCameraBtn = document.getElementById("toggleCameraBtn");
       const cameraContainer = document.getElementById("cameraContainer");
       const video = document.getElementById("cameraPreview");
       const canvas = document.getElementById("cameraCanvas");
+      const canvasWrapper = document.getElementById("canvasWrapper");
       const captureBtn = document.getElementById("captureBtn");
       const fileInput = document.getElementById("fileInput");
       const originalPreview = document.getElementById("originalPreview");
@@ -178,7 +178,7 @@
         });
       });
 
-      // Single toggle button for camera start/stop
+      // Camera start/stop toggle
       toggleCameraBtn.addEventListener("click", async () => {
         if (!cameraActive) {
           cameraContainer.classList.remove("hidden");
@@ -189,17 +189,40 @@
           await camera.start();
           cameraActive = true;
           toggleCameraBtn.textContent = "❌ Stop Camera";
-          toggleCameraBtn.style.background = "#dc3545"; // red
+          toggleCameraBtn.style.background = "#dc3545";
         } else {
           if (camera) await camera.stop();
           cameraContainer.classList.add("hidden");
           cameraActive = false;
           toggleCameraBtn.textContent = "📷 Start Camera";
-          toggleCameraBtn.style.background = "#6c757d"; // grey
+          toggleCameraBtn.style.background = "#6c757d";
         }
       });
 
-      // Capture button
+      // Function to draw image (upload or capture)
+      function drawToCanvas(imageSource) {
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          canvasWrapper.classList.remove("hidden");
+          originalPreview.src = canvas.toDataURL("image/jpeg");
+        };
+        img.src = imageSource;
+      }
+
+      // Upload → draw to canvas
+      fileInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const imageURL = URL.createObjectURL(file);
+          drawToCanvas(imageURL);
+        }
+      });
+
+      // Capture → draw to canvas
       captureBtn.addEventListener("click", () => {
         const ctx = canvas.getContext("2d");
         canvas.width = video.videoWidth;
@@ -212,7 +235,8 @@
           dataTransfer.items.add(file);
           fileInput.files = dataTransfer.files;
 
-          originalPreview.src = URL.createObjectURL(file);
+          const imageURL = URL.createObjectURL(file);
+          drawToCanvas(imageURL);
           alert("✅ Photo captured and ready to process!");
         }, "image/jpeg");
       });
