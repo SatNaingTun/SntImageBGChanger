@@ -4,15 +4,14 @@
   <meta charset="utf-8">
   <title>🎥 Live Webcam Background Changer (MODNet)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <link rel="stylesheet" href="/static/css/style.css">
 
   <style>
-    /* ===========================
-       🎨 MAIN LAYOUT
-    ============================ */
+    /* ===== 🌈 GENERAL LAYOUT ===== */
     body {
-      font-family: "Segoe UI", Roboto, sans-serif;
-      background: #f5f6fa;
+      font-family: "Poppins", Arial, sans-serif;
+      background: linear-gradient(135deg, #e3f2fd, #f9fbe7);
       color: #333;
       margin: 0;
       padding: 20px;
@@ -20,49 +19,69 @@
       justify-content: center;
     }
 
-    main.page {
+    main {
       width: 100%;
       max-width: 1100px;
     }
 
     section.card {
-      background: white;
+      background: #fff;
       border-radius: 16px;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
-      padding: 20px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      padding: 24px;
+      text-align: center;
     }
 
     h2 {
-      text-align: center;
       margin-bottom: 16px;
+      font-size: 1.5rem;
+      color: #212121;
     }
 
-    /* ===========================
-       🎛️ CONTROLS
-    ============================ */
+    /* ===== 🎛️ CONTROL PANEL ===== */
     .controls {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       align-items: center;
       gap: 10px;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
+    }
+
+    select, input[type="color"] {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 0.9rem;
+      cursor: pointer;
+      background: #fafafa;
     }
 
     .btn {
-      padding: 6px 12px;
-      border-radius: 6px;
       border: none;
+      border-radius: 8px;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 500;
       cursor: pointer;
       color: #fff;
-      font-size: 0.9rem;
+      transition: all 0.2s ease;
     }
 
-    .btn-start { background: #4caf50; }
-    .btn-stop { background: #d9534f; }
-    .btn-record { background: #2196f3; }
-    .btn-record-stop { background: #f44336; }
-    .btn-gallery { background: #6c757d; }
+    .btn:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn:active {
+      transform: translateY(0);
+    }
+
+    .btn-upload { background: #6c757d; }
+    .btn-start { background: #28a745; }
+    .btn-gallery { background: #495057; }
+    .btn-record { background: #007bff; }
+    .btn-record-stop { background: #dc3545; }
 
     #bg_preview {
       width: 60px;
@@ -73,15 +92,13 @@
       display: none;
     }
 
-    /* ===========================
-       📷 VIDEO LAYOUT
-    ============================ */
+    /* ===== 🎥 VIDEO SECTION ===== */
     .video-grid {
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
-      margin-top: 15px;
+      margin-top: 20px;
     }
 
     .video-box {
@@ -104,23 +121,23 @@
     .label {
       font-weight: 600;
       margin: 8px 0;
-      text-align: center;
+      font-size: 0.95rem;
     }
 
     @media (max-width: 600px) {
       .video-box {
-        width: 100%;
+        width: 90%;
       }
     }
   </style>
 </head>
 
 <body>
-  <main class="page">
+  <main>
     <section class="card">
       <h2>🎥 Live Webcam Background Changer (MODNet)</h2>
 
-      <!-- 🎛️ Top Controls -->
+      <!-- Control Section -->
       <div class="controls">
         <select id="modeSelect">
           <option value="color" selected>Solid Color</option>
@@ -129,21 +146,21 @@
         </select>
 
         <input type="color" id="colorPicker" value="#00ff00">
-        <label id="bg_label" for="bg_file" class="btn" style="background:#777;">Upload BG</label>
+
+        <label id="bg_label" for="bg_file" class="btn btn-upload">🖼 Upload BG</label>
         <input type="file" id="bg_file" accept="image/*" style="display:none;">
         <img id="bg_preview" alt="BG Preview">
 
         <button id="startBtn" class="btn btn-start">🎥 Start Webcam</button>
+        
+      
+        <button id="recordBtn" class="btn btn-record">⏺ Start Recording</button>
+        <button id="stopRecordBtn" class="btn btn-record-stop" style="display:none;">⏹ Stop Recording</button>
+
         <a href="/gallery" class="btn btn-gallery">🖼 View Gallery</a>
       </div>
 
-      <!-- 🎬 Recording Controls -->
-      <div class="controls">
-        <button id="recordBtn" class="btn btn-record">⏺ Start Recording</button>
-        <button id="stopRecordBtn" class="btn btn-record-stop" style="display:none;">⏹ Stop Recording</button>
-      </div>
-
-      <!-- 📷 Webcam + Processed Output -->
+      <!-- Video Display -->
       <div class="video-grid">
         <div class="video-box">
           <div class="label">Original Webcam</div>
@@ -162,5 +179,48 @@
 
   <script src="/static/js/webcam.js"></script>
   <script src="/static/js/record.js"></script>
+
+  <script>
+    // 🎚 Toggle visibility based on mode
+    document.addEventListener("DOMContentLoaded", () => {
+      const modeSelect = document.getElementById("modeSelect");
+      const colorPicker = document.getElementById("colorPicker");
+      const bgLabel = document.getElementById("bg_label");
+      const bgPreview = document.getElementById("bg_preview");
+
+      function updateControls() {
+        const mode = modeSelect.value;
+        if (mode === "color") {
+          colorPicker.style.display = "inline-block";
+          bgLabel.style.display = "none";
+          bgPreview.style.display = "none";
+        } else if (mode === "custom") {
+          colorPicker.style.display = "none";
+          bgLabel.style.display = "inline-block";
+        } else {
+          // transparent
+          colorPicker.style.display = "none";
+          bgLabel.style.display = "none";
+          bgPreview.style.display = "none";
+        }
+      }
+
+      modeSelect.addEventListener("change", updateControls);
+      updateControls();
+
+      // Show preview when background selected
+      document.getElementById("bg_file").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = () => {
+            bgPreview.src = reader.result;
+            bgPreview.style.display = "inline-block";
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    });
+  </script>
 </body>
 </html>
