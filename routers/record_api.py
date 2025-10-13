@@ -10,6 +10,9 @@ RECORDED_DIR = Path("video/recorded")
 RECORDED_DIR.mkdir(parents=True, exist_ok=True)
 
 
+SNAPSHOT_DIR = Path("video/snapshots")
+SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
+
 @router.post("/upload")
 async def upload_recording(video: UploadFile = File(...)):
     """
@@ -105,14 +108,24 @@ async def delete_recording(filename: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete {filename}: {e}")
 
-@router.post("/snapshot/upload")
-async def upload_snapshot(snapshot: UploadFile = File(...)):
+@router.post("/snapshot_upload")
+async def snapshot_upload(snapshot: UploadFile = File(...)):
     """
-    Save uploaded snapshot (.jpg)
+    Save uploaded snapshot image (from webcam snapshot button).
     """
-    SNAPSHOT_DIR = Path("video/snapshots")
-    SNAPSHOT_DIR.mkdir(parents=True, exist_ok=True)
-    file_path = SNAPSHOT_DIR / snapshot.filename
-    with open(file_path, "wb") as f:
-        f.write(await snapshot.read())
-    return {"message": "Snapshot saved", "path": f"/video/snapshots/{snapshot.filename}"}
+    try:
+        timestamp = int(time.time() * 1000)
+        filename = f"snapshot_{timestamp}.jpg"
+        save_path = SNAPSHOT_DIR / filename
+
+        with open(save_path, "wb") as f:
+            f.write(await snapshot.read())
+
+        print(f"📸 Saved snapshot: {save_path}")
+        return {
+            "message": "Snapshot saved successfully",
+            "path": f"/video/snapshots/{filename}",
+        }
+    except Exception as e:
+        print("❌ Snapshot save failed:", e)
+        raise HTTPException(status_code=500, detail=str(e))

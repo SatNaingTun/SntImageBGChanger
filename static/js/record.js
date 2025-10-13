@@ -128,12 +128,12 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => toast.remove(), 300);
     }, 2500);
   }
-  // 📸 Take Snapshot of processed output
+ // 📸 Take & upload snapshot of processed output
   const snapshotBtn = document.getElementById("snapshotBtn");
   snapshotBtn.addEventListener("click", () => {
     const output = document.getElementById("output");
     if (!output.src || output.src.includes("black")) {
-      showToast("⚠️ Start webcam to take a snapshot!");
+      showToast("⚠️ Start the webcam to take a snapshot!");
       return;
     }
 
@@ -142,18 +142,36 @@ document.addEventListener("DOMContentLoaded", () => {
     canvas.width = output.width || 480;
     canvas.height = output.height || 360;
 
-    // Draw the processed output image
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.src = output.src;
 
-    img.onload = () => {
+    img.onload = async () => {
       ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-      const link = document.createElement("a");
-      link.download = `snapshot_${Date.now()}.jpg`;
-      link.href = canvas.toDataURL("image/jpeg");
-      link.click();
-      showToast("📸 Snapshot saved!");
+
+      // Convert to Blob and upload to backend
+      canvas.toBlob(async (blob) => {
+        const formData = new FormData();
+        formData.append("snapshot", blob, `snapshot_${Date.now()}.jpg`);
+
+        try {
+          const res = await fetch("/api/record/snapshot_upload", {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await res.json();
+          if (res.ok) {
+            showToast("✅ Snapshot uploaded!");
+            console.log("📸 Saved:", data.path);
+          } else {
+            showToast("⚠️ Snapshot upload failed");
+          }
+        } catch (err) {
+          console.error("❌ Snapshot upload error:", err);
+          showToast("❌ Snapshot upload error");
+        }
+      }, "image/jpeg");
     };
   });
 });
