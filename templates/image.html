@@ -5,6 +5,15 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Image Background Changer (MODNet)</title>
   <link rel="stylesheet" href="/static/css/style.css">
+  <style>
+    /* ✅ ensure video is in DOM but invisible until needed */
+    .camera-container.hidden {
+      display: block !important;
+      visibility: hidden;
+      height: 0;
+      overflow: hidden;
+    }
+  </style>
 </head>
 
 <body>
@@ -17,8 +26,7 @@
 
       <!-- Upload Form -->
       <form id="uploadForm">
-
-        <!-- Option to choose input source -->
+        <!-- Input source toggle -->
         <div class="tab-toggle">
           <input type="radio" id="upload" name="inputOption" value="upload" checked>
           <label for="upload" class="tab">Upload Image</label>
@@ -39,7 +47,9 @@
         <div id="cameraSection" class="hidden">
           <div class="center-column">
             <button type="button" class="btn btn-secondary" id="toggleCameraBtn">📷 Start Camera</button>
-            <div id="cameraContainer" class="hidden camera-container">
+
+            <!-- ✅ Video always exists in DOM but initially invisible -->
+            <div id="cameraContainer" class="camera-container hidden">
               <video id="cameraPreview" autoplay playsinline width="320" height="240"></video>
               <div class="btn-bar">
                 <button type="button" class="btn btn-primary" id="captureBtn">📸 Capture</button>
@@ -48,7 +58,7 @@
           </div>
         </div>
 
-        <!-- Canvas (shared preview for both upload & capture) -->
+        <!-- Canvas (shared for upload & camera) -->
         <div id="canvasWrapper" class="hidden canvas-wrapper">
           <canvas id="cameraCanvas" width="320" height="240" class="camera-canvas"></canvas>
         </div>
@@ -81,7 +91,7 @@
         </div>
       </form>
 
-      <!-- Loading indicator -->
+      <!-- Loading Indicator -->
       <div id="loading" class="hidden">Processing... Please wait ⏳</div>
 
       <!-- Image Preview -->
@@ -106,7 +116,7 @@
     </section>
   </main>
 
-  <!-- External JS -->
+  <!-- ✅ Scripts loaded last (ensures DOM is ready) -->
   <script src="/static/js/camera.js"></script>
   <script src="/static/js/image.js"></script>
 </body>

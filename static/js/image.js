@@ -1,4 +1,6 @@
+// image.js
 document.addEventListener("DOMContentLoaded", () => {
+  // ===== DOM Elements =====
   const modeSelect = document.getElementById("modeSelect");
   const colorField = document.getElementById("colorField");
   const bgUploadField = document.getElementById("bgUploadField");
@@ -17,19 +19,22 @@ document.addEventListener("DOMContentLoaded", () => {
   const cameraSection = document.getElementById("cameraSection");
   const toggleCameraBtn = document.getElementById("toggleCameraBtn");
   const cameraContainer = document.getElementById("cameraContainer");
-  const video = document.getElementById("cameraPreview");
   const canvas = document.getElementById("cameraCanvas");
   const canvasWrapper = document.getElementById("canvasWrapper");
   const captureBtn = document.getElementById("captureBtn");
 
-  let camera;
+  // ===== Camera State =====
+  let camera = null;
   let cameraActive = false;
 
-  // ✅ Helper: show/hide canvas cleanly
+  // ===== Helper: Canvas Visibility =====
   function showCanvas() {
-    if (canvasWrapper) canvasWrapper.classList.add("show");
-    if (canvasWrapper) canvasWrapper.classList.remove("hidden");
+    if (canvasWrapper) {
+      canvasWrapper.classList.add("show");
+      canvasWrapper.classList.remove("hidden");
+    }
   }
+
   function hideCanvas() {
     if (canvasWrapper) {
       canvasWrapper.classList.remove("show");
@@ -41,7 +46,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Show/hide fields based on mode selection
+  // ===== Mode (color/custom/transparent) =====
   function toggleFields() {
     const mode = modeSelect.value;
     colorField.style.display = mode === "color" ? "flex" : "none";
@@ -50,12 +55,12 @@ document.addEventListener("DOMContentLoaded", () => {
   modeSelect.addEventListener("change", toggleFields);
   toggleFields();
 
-  // Handle form submission
+  // ===== Form Submit Handler =====
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const file = fileInput.files[0];
-    if (!file) return alert("Please choose an image first.");
+    if (!file) return alert("Please choose or capture an image first.");
 
     const formData = new FormData();
     formData.append("file", file);
@@ -65,7 +70,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const bgFile = document.getElementById("bg_file").files[0];
     if (bgFile) formData.append("bg_file", bgFile);
 
-    // Show local preview immediately
     originalPreview.src = URL.createObjectURL(file);
     previewSection.classList.remove("hidden");
     loading.classList.remove("hidden");
@@ -78,7 +82,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (data.error) throw new Error(data.error);
 
       await new Promise((r) => setTimeout(r, 300));
-      const ts = "?t=" + new Date().getTime();
+      const ts = "?t=" + Date.now();
       originalPreview.src = data.original + ts;
       resultPreview.src = data.result + ts;
 
@@ -95,10 +99,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✅ Download handler (unchanged)
+  // ===== Download Button =====
   downloadLink.addEventListener("click", async (e) => {
     e.preventDefault();
-
     const url = downloadLink.dataset.downloadUrl;
     const filename = downloadLink.dataset.filename || "changed_image.jpg";
     if (!url) return alert("No file available for download.");
@@ -123,43 +126,61 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // ✅ Reset form — also clear canvas
+  // ===== Reset Button =====
   resetBtn.addEventListener("click", () => {
     form.reset();
     previewSection.classList.add("hidden");
     buttons.classList.add("hidden");
     toggleFields();
-    hideCanvas(); // ✅ added
+    hideCanvas();
+
+    // Stop camera if running
+    if (camera) camera.stop();
+    if (cameraContainer) cameraContainer.classList.add("hidden");
+    if (toggleCameraBtn) {
+      toggleCameraBtn.textContent = "📷 Start Camera";
+      toggleCameraBtn.style.background = "#6c757d";
+    }
+    cameraActive = false;
+    camera = null;
   });
 
-  // Toggle between upload and camera
+  // ===== Upload / Camera Toggle =====
   inputOptions.forEach(opt => {
     opt.addEventListener("change", () => {
       if (opt.value === "upload" && opt.checked) {
         uploadSection.classList.remove("hidden");
         cameraSection.classList.add("hidden");
-        hideCanvas(); // ✅ hide if switching
+        hideCanvas();
       } else if (opt.value === "camera" && opt.checked) {
         uploadSection.classList.add("hidden");
         cameraSection.classList.remove("hidden");
-        hideCanvas(); // ✅ hide before showing camera
+        hideCanvas();
       }
     });
   });
 
-  // Camera start/stop toggle
+  // ===== Camera Start/Stop Button (Safe Version) =====
   toggleCameraBtn.addEventListener("click", async () => {
+    // ✅ Always re-fetch video element to ensure DOM readiness
+    const videoEl = document.getElementById("cameraPreview");
+
+    if (!videoEl) {
+      alert("Camera element not ready yet. Please reload the page.");
+      console.error("cameraPreview not found in DOM.");
+      return;
+    }
+
     if (!cameraActive) {
       cameraContainer.classList.remove("hidden");
+
       if (!camera) {
-        if (!video) {
-          console.error("Camera preview element not found");
-          alert("Camera not available in this page.");
-          return;
-        }
-        const settings = new CameraSettings({ facing: "user", width: 640, height: 480 });
-        camera = new CameraController(video, settings);
+        camera = new window.CameraController(
+          videoEl,
+          new window.CameraSettings({ facing: "user", width: 640, height: 480 })
+        );
       }
+
       try {
         await camera.start();
         cameraActive = true;
@@ -175,16 +196,41 @@ document.addEventListener("DOMContentLoaded", () => {
       cameraActive = false;
       toggleCameraBtn.textContent = "📷 Start Camera";
       toggleCameraBtn.style.background = "#6c757d";
-      hideCanvas(); // ✅ hide when stopping camera
+      hideCanvas();
+      camera = null;
     }
   });
 
-  // ✨ Draw image scaled to fit card (upload or capture)
+  // ===== Capture Photo =====
+  captureBtn.addEventListener("click", () => {
+    const videoEl = document.getElementById("cameraPreview");
+    if (!videoEl || !videoEl.srcObject) {
+      alert("Camera not active!");
+      return;
+    }
+
+    const ctx = canvas.getContext("2d");
+    canvas.width = videoEl.videoWidth || 320;
+    canvas.height = videoEl.videoHeight || 240;
+    ctx.drawImage(videoEl, 0, 0, canvas.width, canvas.height);
+
+    canvas.toBlob((blob) => {
+      const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
+      const dataTransfer = new DataTransfer();
+      dataTransfer.items.add(file);
+      fileInput.files = dataTransfer.files;
+
+      const imageURL = URL.createObjectURL(file);
+      drawToCanvas(imageURL);
+      alert("✅ Photo captured and ready to process!");
+    }, "image/jpeg");
+  });
+
+  // ===== Draw Image to Canvas =====
   function drawToCanvas(imageSource) {
     const ctx = canvas.getContext("2d");
     const img = new Image();
     img.onload = () => {
-      // Compute max allowed size based on card width
       const card = document.querySelector(".card");
       const maxW = card ? card.clientWidth * 0.85 : 800;
       const maxH = window.innerHeight * 0.6;
@@ -198,44 +244,30 @@ document.addEventListener("DOMContentLoaded", () => {
       canvas.height = height;
       ctx.clearRect(0, 0, width, height);
       ctx.drawImage(img, 0, 0, width, height);
-      showCanvas(); // ✅ show when drawn
+      showCanvas();
 
       if (originalPreview) originalPreview.src = canvas.toDataURL("image/jpeg");
     };
     img.src = imageSource;
   }
 
-  // Upload → draw to canvas
+  // ===== File Upload → Draw to Canvas =====
   fileInput.addEventListener("change", (e) => {
     const file = e.target.files[0];
     if (file) {
       const imageURL = URL.createObjectURL(file);
       drawToCanvas(imageURL);
     } else {
-      hideCanvas(); // ✅ hide if no file
+      hideCanvas();
     }
   });
 
-  // Capture → draw to canvas
-  captureBtn.addEventListener("click", () => {
-    if (!video) {
-      console.error("No video element for capture");
-      return;
-    }
-    const ctx = canvas.getContext("2d");
-    canvas.width = video.videoWidth || 320;
-    canvas.height = video.videoHeight || 240;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+  // ===== Auto Stop Camera When Leaving Page =====
+  window.addEventListener("beforeunload", () => {
+    if (camera) camera.stop();
+  });
 
-    canvas.toBlob((blob) => {
-      const file = new File([blob], "camera_capture.jpg", { type: "image/jpeg" });
-      const dataTransfer = new DataTransfer();
-      dataTransfer.items.add(file);
-      fileInput.files = dataTransfer.files;
-
-      const imageURL = URL.createObjectURL(file);
-      drawToCanvas(imageURL);
-      alert("✅ Photo captured and ready to process!");
-    }, "image/jpeg");
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden && camera) camera.stop();
   });
 });

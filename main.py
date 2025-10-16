@@ -65,3 +65,8 @@ async def home(request: Request):
 @app.get("/gallery")
 async def gallery_page(request: Request):
     return templates.TemplateResponse("gallery.html", {"request": request})
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+
