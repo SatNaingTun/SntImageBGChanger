@@ -127,7 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== Reset Button =====
-  resetBtn.addEventListener("click", () => {
+  resetBtn.addEventListener("click", async () => {
     form.reset();
     previewSection.classList.add("hidden");
     buttons.classList.add("hidden");
@@ -135,24 +135,40 @@ document.addEventListener("DOMContentLoaded", () => {
     hideCanvas();
 
     // Stop camera if running
-    if (camera) camera.stop();
-    if (cameraContainer) cameraContainer.classList.add("hidden");
-    if (toggleCameraBtn) {
-      toggleCameraBtn.textContent = "📷 Start Camera";
-      toggleCameraBtn.style.background = "#6c757d";
+    if (cameraActive && camera) {
+      await camera.stop();
+      cameraActive = false;
     }
-    cameraActive = false;
+    if (cameraContainer) cameraContainer.classList.add("hidden");
+    const videoEl = document.getElementById("cameraPreview");
+    if (videoEl) videoEl.style.visibility = "hidden";
+    toggleCameraBtn.textContent = "📷 Start Camera";
+    toggleCameraBtn.style.background = "#6c757d";
     camera = null;
   });
 
   // ===== Upload / Camera Toggle =====
   inputOptions.forEach(opt => {
-    opt.addEventListener("change", () => {
+    opt.addEventListener("change", async () => {
       if (opt.value === "upload" && opt.checked) {
+        // Show upload, hide camera
         uploadSection.classList.remove("hidden");
         cameraSection.classList.add("hidden");
         hideCanvas();
+
+        // ✅ Stop camera automatically if running
+        if (cameraActive && camera) {
+          await camera.stop();
+          cameraActive = false;
+          cameraContainer.classList.add("hidden");
+          const videoEl = document.getElementById("cameraPreview");
+          if (videoEl) videoEl.style.visibility = "hidden";
+          toggleCameraBtn.textContent = "📷 Start Camera";
+          toggleCameraBtn.style.background = "#6c757d";
+          camera = null;
+        }
       } else if (opt.value === "camera" && opt.checked) {
+        // Show camera section
         uploadSection.classList.add("hidden");
         cameraSection.classList.remove("hidden");
         hideCanvas();
@@ -160,19 +176,22 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ===== Camera Start/Stop Button (Safe Version) =====
+  // ===== Camera Start/Stop Button =====
   toggleCameraBtn.addEventListener("click", async () => {
-    // ✅ Always re-fetch video element to ensure DOM readiness
     const videoEl = document.getElementById("cameraPreview");
-
     if (!videoEl) {
       alert("Camera element not ready yet. Please reload the page.");
       console.error("cameraPreview not found in DOM.");
       return;
     }
 
+    // Let browser render before starting camera
+    await new Promise(requestAnimationFrame);
+
     if (!cameraActive) {
       cameraContainer.classList.remove("hidden");
+      videoEl.style.visibility = "visible";
+      await new Promise(requestAnimationFrame); // second frame for layout
 
       if (!camera) {
         camera = new window.CameraController(
@@ -189,10 +208,13 @@ document.addEventListener("DOMContentLoaded", () => {
       } catch (err) {
         console.error("Failed to start camera:", err);
         alert("Could not start camera. Please check permissions.");
+        camera = null;
+        cameraActive = false;
       }
     } else {
       if (camera) await camera.stop();
       cameraContainer.classList.add("hidden");
+      videoEl.style.visibility = "hidden";
       cameraActive = false;
       toggleCameraBtn.textContent = "📷 Start Camera";
       toggleCameraBtn.style.background = "#6c757d";
