@@ -26,7 +26,7 @@ print(f"🧠 Using device: {device}")
 # -------------------------------------------------------
 # Load your fine-tuned checkpoint
 # -------------------------------------------------------
-model_name = "modnet_photographic_portrait_matting.ckpt"
+model_name = "modnet_finetuned_photographic.ckpt"
 CKPT_PATH = ROOT / "models" / model_name
 
 modnet = MODNet(backbone_pretrained=False).to(device)

@@ -23,7 +23,7 @@ except ModuleNotFoundError as e:
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 ROOT = Path(__file__).resolve().parent
-webcam_model_name = "modnet_webcam_portrait_matting.ckpt"
+webcam_model_name = "modnet_finetuned_webcam.ckpt"
 webcam_model_path = ROOT / "models" / webcam_model_name
 
 print(f"🔧 Loading webcam MODNet model: {webcam_model_path}")
