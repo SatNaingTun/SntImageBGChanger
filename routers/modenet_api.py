@@ -1,21 +1,21 @@
-import cv2
-import base64
-import numpy as np
+import cv2, base64, numpy as np, asyncio
 from fastapi import APIRouter, File, UploadFile
+from concurrent.futures import ThreadPoolExecutor
 from modnet_infer import apply_modnet
 
 router = APIRouter(prefix="/api/modnet", tags=["MODNet"])
+executor = ThreadPoolExecutor(max_workers=2)
+
+def modnet_sync(frame_bytes):
+    npimg = np.frombuffer(frame_bytes, np.uint8)
+    frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
+    result = apply_modnet(frame)
+    _, buf = cv2.imencode(".jpg", result)
+    return base64.b64encode(buf).decode("utf-8")
 
 @router.post("/process")
 async def process_frame(file: UploadFile = File(...)):
-    """Receive an image, apply MODNet, return base64-encoded result"""
     data = await file.read()
-    npimg = np.frombuffer(data, np.uint8)
-    frame = cv2.imdecode(npimg, cv2.IMREAD_COLOR)
-
-    result = apply_modnet(frame)
-
-    _, buf = cv2.imencode(".jpg", result)
-    b64_img = base64.b64encode(buf).decode("utf-8")
-
+    loop = asyncio.get_running_loop()
+    b64_img = await loop.run_in_executor(executor, modnet_sync, data)
     return {"image_base64": b64_img}
