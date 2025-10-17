@@ -10,7 +10,7 @@ from modnet_infer import apply_modnet, apply_modnet_cutout_rgba
 
 templates = Jinja2Templates(directory="templates")
 
-router = APIRouter(prefix="/image", tags=["Image"])
+router = APIRouter(prefix="/imageview", tags=["Image View"])
 
 # -------------------------------------------------------
 # Folder structure
@@ -40,9 +40,9 @@ def cleanup_old_files(folder: Path, max_files: int = 100):
 # Routes
 # -------------------------------------------------------
 @router.get("/", response_class=HTMLResponse)
-async def image_page(request: Request):
+async def ImageView(request: Request):
     """Render upload page."""
-    return templates.TemplateResponse("image.html", {"request": request, "result": None})
+    return templates.TemplateResponse("ImageView.html", {"request": request, "result": None})
 
 
 @router.post("/", response_class=HTMLResponse)

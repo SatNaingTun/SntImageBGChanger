@@ -8,7 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 # ✅ Lightweight routers first
-from routers import webcam, image_page, gallery_api
+from routers import ImageView, VideoView, gallery_api
 
 app = FastAPI(title="FastAPI Camera App")
 
@@ -39,8 +39,8 @@ app.mount("/images/changed", NoCacheStaticFiles(directory="images/changed"), nam
 app.mount("/images/background", NoCacheStaticFiles(directory="images/background"), name="background")
 
 # ---------------- Lightweight Routers ----------------
-app.include_router(webcam.router)
-app.include_router(image_page.router)
+app.include_router(VideoView.router)
+app.include_router(ImageView.router)
 app.include_router(gallery_api.router)
 
 # ---------------- Async Heavy Routers ----------------

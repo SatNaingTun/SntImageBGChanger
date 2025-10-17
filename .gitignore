@@ -23,8 +23,12 @@ video/snapshots/*.*
 # images/upload/Sat Naing Tun-photo.jpg
 # images/upload/snt photo 2025.png
 __pycache__/main.cpython-313.pyc
+routers/__pycache__/
+routers/__pycache__/*.*
 routers/__pycache__/webcam.cpython-313.pyc
 __pycache__/main.cpython-313.pyc
 __pycache__/main.cpython-313.pyc
 routers/__pycache__/webcam.cpython-313.pyc
 __pycache__/main.cpython-313.pyc
+__pycache__/main.cpython-313.pyc
+
