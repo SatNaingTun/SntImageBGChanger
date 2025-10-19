@@ -100,31 +100,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // ===== Download Button =====
-  downloadLink.addEventListener("click", async (e) => {
-    e.preventDefault();
-    const url = downloadLink.dataset.downloadUrl;
-    const filename = downloadLink.dataset.filename || "changed_image.jpg";
-    if (!url) return alert("No file available for download.");
+  downloadLink.addEventListener("click", (e) => {
+  e.preventDefault();
 
-    try {
-      const res = await fetch(url + "?t=" + Date.now());
-      const blob = await res.blob();
-      const a = document.createElement("a");
-      const objectUrl = URL.createObjectURL(blob);
-      a.href = objectUrl;
-      a.download = filename;
-      a.style.display = "none";
-      document.body.appendChild(a);
-      setTimeout(() => {
-        a.click();
-        URL.revokeObjectURL(objectUrl);
-        a.remove();
-      }, 0);
-    } catch (err) {
-      console.error("❌ Download failed:", err);
-      alert("Failed to download image.");
-    }
-  });
+  const resultImg = document.getElementById("resultPreview");
+  if (!resultImg || !resultImg.src) {
+    alert("❌ No result image available!");
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = resultImg.src;
+  link.download = ""; // Let browser use default filename
+  link.click();
+});
+
 
   // ===== Reset Button =====
   resetBtn.addEventListener("click", async () => {
