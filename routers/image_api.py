@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 import cv2
 import numpy as np
-from modnet_infer import apply_modnet, apply_modnet_cutout_rgba
+from modnet_infer import apply_modnet, apply_modnet_blur_background, apply_modnet_cutout_rgba
 
 router = APIRouter(prefix="/api/image", tags=["AJAX Image API"])
 
@@ -18,7 +18,7 @@ for folder in [UPLOAD_DIR, CHANGED_DIR, BACKGROUND_DIR]:
 MAX_FILES_PER_FOLDER = 100
 
 
-def cleanup_old_files(folder: Path, max_files: int = 100):
+def cleanup_old_files(folder: Path, max_files: int = 20):
     files = sorted(folder.glob("*"), key=lambda f: f.stat().st_mtime, reverse=True)
     for old_file in files[max_files:]:
         try:
@@ -33,6 +33,7 @@ async def process_image(
     mode: str = Form("color"),
     color: str = Form("#ffffff"),
     bg_file: UploadFile = None,
+    blur_strength: int = Form(35),
 ):
     """
     Process an uploaded image with MODNet and return JSON paths.
@@ -73,6 +74,22 @@ async def process_image(
                 cv2.imwrite(str(changed_path), result)
             else:
                 return JSONResponse({"error": "Could not read background image."}, status_code=400)
+        # elif mode == "extract_bg":
+        #     result = extract_background(frame)
+        #     if result is not None:
+        #         cv2.imwrite(str(changed_path), result)  # Save the extracted background
+        #     else:
+        #         return HTMLResponse("<h3>❌ Could not extract background.</h3>", status_code=400)
+
+        # Replace background with its blurred version
+        elif mode == "blur_bg":
+            print("Blur background mode triggered")
+            # print(f" Blurring background with strength: {blur_strength}")
+            result = apply_modnet_blur_background(frame_bgr=frame, blur_strength=blur_strength)
+            if result is not None:
+                cv2.imwrite(str(changed_path), result)
+            else:
+                return JSONResponse({"error": "Could not blur background."}, status_code=400)   
 
         # Solid color
         else:

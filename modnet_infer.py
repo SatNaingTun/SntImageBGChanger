@@ -31,7 +31,7 @@ CKPT_PATH = ROOT / "models" / model_name
 
 modnet = MODNet(backbone_pretrained=False).to(device)
 
-print(f"Loading checkpoint from: {CKPT_PATH}")
+print(f"Loading Image Model from: {CKPT_PATH}")
 try:
     state = torch.load(CKPT_PATH, map_location=device)
 except FileNotFoundError:
@@ -138,4 +138,62 @@ def apply_modnet_cutout_rgba(frame_bgr):
 
     return rgba
 
+@torch.inference_mode()
+def extract_background(frame_bgr):
+    """
+    Extract only the background part of the image using MODNet matte.
+    Returns a BGR image where foreground is blacked out.
+    """
+    h, w, _ = frame_bgr.shape
+    rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+    im = Image.fromarray(rgb).resize((512, 512))
+    tensor_input = preprocess(im).unsqueeze(0).to(device)
 
+    _, _, matte = modnet(tensor_input, True)
+    matte = matte[0][0].cpu().numpy()
+    matte = cv2.resize(matte, (w, h), interpolation=cv2.INTER_LINEAR)
+    matte = np.clip(matte, 0, 1)
+
+    # Background = inverse matte
+    bg_mask = 1 - matte
+    bg_mask = np.repeat(bg_mask[:, :, None], 3, axis=2)
+    background = (frame_bgr.astype(np.float32) * bg_mask).astype(np.uint8)
+    return background
+
+
+@torch.inference_mode()
+def apply_modnet_blur_background(frame_bgr, blur_strength=35):
+    """
+    Keep the person clear, blur only the extracted background region.
+    """
+    h, w, _ = frame_bgr.shape
+    rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
+    im = Image.fromarray(rgb).resize((512, 512))
+    tensor_input = preprocess(im).unsqueeze(0).to(device)
+
+    _, _, matte = modnet(tensor_input, True)
+    matte = matte[0][0].cpu().numpy()
+    matte = cv2.resize(matte, (w, h), interpolation=cv2.INTER_LINEAR)
+    matte = np.clip(matte, 0, 1)
+    matte = cv2.GaussianBlur(matte, (5, 5), 0)
+
+    # Prepare blurred background
+    bg = cv2.GaussianBlur(frame_bgr, (blur_strength, blur_strength), 0)
+
+    # Blend using matte
+    matte_3 = np.repeat(matte[:, :, None], 3, axis=2)
+    out = frame_bgr.astype(np.float32) * matte_3 + bg.astype(np.float32) * (1 - matte_3)
+    out = np.clip(out, 0, 255).astype(np.uint8)
+    return out
+
+if __name__ == "__main__":
+    input_path = "./images/upload/Sat Naing Tun bg changed.jpg"
+    output_path = "./images/changed/Sat Naing Tun blur only.png"
+
+    frame_bgr = cv2.imread(input_path)
+    if frame_bgr is None:
+        raise FileNotFoundError(f"❌ Could not read image: {input_path}")
+    # print("Extracting background only...")
+    # background = extract_background(frame_bgr)
+    output=apply_modnet_blur_background(frame_bgr, blur_strength=35)
+    cv2.imwrite(output_path, output)

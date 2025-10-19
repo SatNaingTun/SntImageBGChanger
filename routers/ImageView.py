@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import os
 
-from modnet_infer import apply_modnet, apply_modnet_cutout_rgba
+from modnet_infer import apply_modnet, apply_modnet_cutout_rgba, apply_modnet_blur_background, extract_background
 
 templates = Jinja2Templates(directory="templates")
 
@@ -26,7 +26,7 @@ for folder in [UPLOAD_DIR, CHANGED_DIR, BACKGROUND_DIR]:
 MAX_FILES_PER_FOLDER = 100
 
 
-def cleanup_old_files(folder: Path, max_files: int = 100):
+def cleanup_old_files(folder: Path, max_files: int = 15):
     """Keep only latest N files."""
     files = sorted(folder.glob("*"), key=lambda f: f.stat().st_mtime, reverse=True)
     for old_file in files[max_files:]:
@@ -52,6 +52,7 @@ async def process_image(
     mode: str = Form("color"),
     color: str = Form("#ffffff"),
     bg_file: UploadFile = None,
+    blur_strength: int = Form(35),
 ):
     """Process uploaded image with MODNet."""
     try:
@@ -69,14 +70,16 @@ async def process_image(
         if frame is None:
             return HTMLResponse("<h3>❌ Could not decode uploaded image.</h3>", status_code=400)
         cv2.imwrite(str(original_path), frame)
-
+        print(f"{mode} is running")
         # Transparent background
         if mode == "transparent":
-            rgba = apply_modnet_cutout_rgba(frame)
-            cv2.imwrite(str(changed_path), cv2.cvtColor(rgba, cv2.COLOR_RGBA2BGRA))
+             print("🧼 Transparent mode triggered")
+             rgba = apply_modnet_cutout_rgba(frame)
+             cv2.imwrite(str(changed_path), cv2.cvtColor(rgba, cv2.COLOR_RGBA2BGRA))
 
         # Custom uploaded background
         elif mode == "custom" and bg_file:
+            print("🖼️ Custom background mode triggered")
             bg_data = await bg_file.read()
             np_bg = np.frombuffer(bg_data, np.uint8)
             bg_img = cv2.imdecode(np_bg, cv2.IMREAD_COLOR)
@@ -86,9 +89,27 @@ async def process_image(
                 cv2.imwrite(str(changed_path), result)
             else:
                 return HTMLResponse("<h3>❌ Could not read background image.</h3>", status_code=400)
+                # Extract background only
+        # elif mode == "extract_bg":
+        #     result = extract_background(frame)
+        #     if result is not None:
+        #         cv2.imwrite(str(changed_path), result)  # Save the extracted background
+        #     else:
+        #         return HTMLResponse("<h3>❌ Could not extract background.</h3>", status_code=400)
+
+        # Replace background with its blurred version
+        elif mode == "blur_bg":
+            print("Blur background mode triggered")
+            # print(f" Blurring background with strength: {blur_strength}")
+            result = apply_modnet_blur_background(frame_bgr=frame, blur_strength=blur_strength)
+            if result is not None:
+                cv2.imwrite(str(changed_path), result)
+            else:
+                return HTMLResponse("<h3>❌ Could not blur background.</h3>", status_code=400)
 
         # Solid color background
         else:
+            print("🎨 Solid color mode triggered")
             hex_color = color.lstrip("#")
             try:
                 r = int(hex_color[0:2], 16)

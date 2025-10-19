@@ -51,6 +51,13 @@ document.addEventListener("DOMContentLoaded", () => {
     const mode = modeSelect.value;
     colorField.style.display = mode === "color" ? "flex" : "none";
     bgUploadField.style.display = mode === "custom" ? "flex" : "none";
+    if (blurField) blurField.style.display = mode === "blur_bg" ? "flex" : "none";
+    // Hide color and background fields for extract_bg mode
+    if (mode === "extract_bg") {
+      colorField.style.display = "none";
+      bgUploadField.style.display = "none";
+    }
+    // alert(`Current mode: ${mode}`); // Alert showing the current mode
   }
   modeSelect.addEventListener("change", toggleFields);
   toggleFields();
@@ -114,6 +121,14 @@ document.addEventListener("DOMContentLoaded", () => {
   link.download = ""; // Let browser use default filename
   link.click();
 });
+
+  // ===== Blur Slider Update =====
+  if (blurSlider && blurValue) {
+    blurSlider.addEventListener("input", () => {
+      blurValue.textContent = blurSlider.value;
+    });
+  }
+
 
 
   // ===== Reset Button =====

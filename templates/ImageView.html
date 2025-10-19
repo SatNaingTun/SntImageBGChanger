@@ -70,8 +70,18 @@
             <option value="color" selected>Solid color</option>
             <option value="custom">Custom background image</option>
             <option value="transparent">Remove background (PNG)</option>
+            <option value="blur_bg">Blur background</option>
+            <!-- <option value="extract_bg">Extract background only</option> -->
           </select>
         </label>
+
+        <!-- Blur Intensity Slider (only visible in blur_bg mode) -->
+        <label id="blurField" class="field-col-start" style="display:none;">
+          Blur Intensity:
+          <input type="range" id="blurSlider" name="blur_strength" min="5" max="100" step="5" value="35">
+          <span id="blurValue">35</span> px
+        </label>
+
 
         <!-- Color Picker -->
         <label id="colorField" class="field-col-start">
