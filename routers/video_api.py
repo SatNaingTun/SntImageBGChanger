@@ -3,6 +3,7 @@ from pathlib import Path
 import cv2, numpy as np, base64, time, asyncio
 from concurrent.futures import ThreadPoolExecutor
 from modnet_infer_video import apply_modnet_video
+from routers.CleanFiles import cleanup_old_files
 
 router = APIRouter(prefix="/api/video", tags=["AJAX Video API"])
 
@@ -41,7 +42,8 @@ def process_frame_sync(frame_bytes, mode, color, bg_file_data=None):
     cv2.imwrite(str(output_path), result)
     _, buffer = cv2.imencode(".jpg", result)
     encoded = base64.b64encode(buffer).decode("utf-8")
-
+    cleanup_old_files(CHANGED_DIR, max_files=100)
+    cleanup_old_files(BACKGROUND_DIR, max_files=100)
     return {
         "result": f"data:image/jpeg;base64,{encoded}",
         "saved_path": f"/video/changed/{output_path.name}"

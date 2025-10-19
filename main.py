@@ -9,8 +9,9 @@ from fastapi.templating import Jinja2Templates
 
 # ✅ Lightweight routers first
 from routers import ImageView, VideoView, gallery_api
+from routers import CleanFiles
 
-app = FastAPI(title="FastAPI Camera App")
+app = FastAPI(title="SNT Background Changer App")
 
 # ---------------- Templates ----------------
 templates = Jinja2Templates(directory="templates")
@@ -42,6 +43,7 @@ app.mount("/images/background", NoCacheStaticFiles(directory="images/background"
 app.include_router(VideoView.router)
 app.include_router(ImageView.router)
 app.include_router(gallery_api.router)
+app.include_router(CleanFiles.router)
 
 # ---------------- Async Heavy Routers ----------------
 async def async_import_router(module_name: str):

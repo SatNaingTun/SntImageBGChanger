@@ -4,6 +4,7 @@ from pathlib import Path
 import cv2
 import numpy as np
 from modnet_infer import apply_modnet, apply_modnet_blur_background, apply_modnet_cutout_rgba
+from routers.CleanFiles import cleanup_old_files
 
 router = APIRouter(prefix="/api/image", tags=["AJAX Image API"])
 
@@ -15,16 +16,6 @@ BACKGROUND_DIR = BASE_DIR / "background"
 for folder in [UPLOAD_DIR, CHANGED_DIR, BACKGROUND_DIR]:
     folder.mkdir(parents=True, exist_ok=True)
 
-MAX_FILES_PER_FOLDER = 100
-
-
-def cleanup_old_files(folder: Path, max_files: int = 20):
-    files = sorted(folder.glob("*"), key=lambda f: f.stat().st_mtime, reverse=True)
-    for old_file in files[max_files:]:
-        try:
-            old_file.unlink()
-        except Exception as e:
-            print(f"⚠️ Could not delete {old_file}: {e}")
 
 
 @router.post("/process")
