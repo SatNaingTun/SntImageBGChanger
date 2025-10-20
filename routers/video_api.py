@@ -1,9 +1,12 @@
 from fastapi import APIRouter, UploadFile, Form, File
 from pathlib import Path
+from fastapi.responses import FileResponse, JSONResponse
 import cv2, numpy as np, base64, time, asyncio
 from concurrent.futures import ThreadPoolExecutor
-from modnet_infer_video import apply_modnet_video
+from modnet_infer_video import apply_modnet_video,apply_modnet_video_file
+import uuid
 from routers.CleanFiles import cleanup_old_files
+
 
 router = APIRouter(prefix="/api/video", tags=["AJAX Video API"])
 
@@ -12,6 +15,11 @@ CHANGED_DIR = BASE_DIR / "changed"
 BACKGROUND_DIR = BASE_DIR / "background"
 CHANGED_DIR.mkdir(parents=True, exist_ok=True)
 BACKGROUND_DIR.mkdir(parents=True, exist_ok=True)
+
+CHANGED_VIDEO_DIR = BASE_DIR / "changedVideo"
+CHANGED_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
+UPLOAD_DIR = BASE_DIR / "upload"
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 executor = ThreadPoolExecutor(max_workers=3)
 
@@ -70,3 +78,71 @@ async def process_frame(
         bg_data,
     )
     return result
+
+# =================================================
+# 🎞️ PROCESS FULL VIDEO (for Upload tab)
+# =================================================
+@router.post("/process_video")
+async def process_video(
+    mode: str = Form("color"),
+    color: str = Form("#00ff00"),
+    file: UploadFile = File(...),
+    bg_file: UploadFile = File(None),
+):
+    """
+    Handle full uploaded video and run MODNet inference asynchronously.
+    Supports:
+      - Solid color background
+      - Custom background image
+      - Transparent background
+    """
+    file_id = str(uuid.uuid4())[:8]
+    input_path = UPLOAD_DIR / f"input_{file_id}.mp4"
+    output_path = CHANGED_VIDEO_DIR / f"output_{file_id}.mp4"
+    bg_path = None
+
+    # Save uploaded video
+    with open(input_path, "wb") as f:
+        f.write(await file.read())
+
+    # Optional background image
+    if bg_file:
+        bg_path = UPLOAD_DIR / f"bg_{file_id}.jpg"
+        with open(bg_path, "wb") as f:
+            f.write(await bg_file.read())
+
+    # Run inference in background thread
+    loop = asyncio.get_running_loop()
+    await loop.run_in_executor(
+        executor,
+        apply_modnet_video_file,
+        str(input_path),
+        str(output_path),
+        mode,
+        color,
+        str(bg_path) if bg_path else None,
+    )
+
+    # Clean old files
+    cleanup_old_files(CHANGED_VIDEO_DIR, max_files=20)
+    cleanup_old_files(UPLOAD_DIR, max_files=5)
+
+    # Return path to processed video
+    rel_path = f"/video/changedVideo/{output_path.name}"
+    return {"result": "done", "output_url": rel_path}
+
+
+@router.get("/download/{filename}")
+async def download_video(filename: str):
+    """Serve processed video."""
+    file_path = CHANGED_VIDEO_DIR / filename
+    if not file_path.exists():
+        return JSONResponse({"error": "File not ready"}, status_code=404)
+
+    # ensure file fully written
+    for _ in range(10):
+        if file_path.exists() and file_path.stat().st_size > 0:
+            break
+        await asyncio.sleep(0.5)
+
+    return FileResponse(path=file_path, filename=filename, media_type="video/mp4")

@@ -25,6 +25,10 @@ video/snapshots/*.*
 __pycache__/main.cpython-313.pyc
 routers/__pycache__/
 routers/__pycache__/*.*
+video/changedVideo/
+video/changedVideo/*.*
+video/upload/
+video/upload/*.*
 routers/__pycache__/webcam.cpython-313.pyc
 __pycache__/main.cpython-313.pyc
 __pycache__/main.cpython-313.pyc

@@ -1,6 +1,8 @@
 # ==========================================
 # modnet_infer_video.py
 # ==========================================
+import time
+import subprocess
 import sys
 import cv2
 import numpy as np
@@ -79,3 +81,79 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
         bg = np.full_like(frame, bgcolor, dtype=np.uint8).astype(np.float32) / 255.0
         result = (fg * matte_3 + bg * (1 - matte_3)) * 255
         return result.astype(np.uint8)
+
+# =====================================================
+# 🎬 Apply MODNet on full video using MoviePy
+# =====================================================
+def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff00", bg_path=None):
+    """
+    Process a full video with MODNet using MoviePy for writing.
+    This version does not require an external FFmpeg installation.
+    """
+    
+    from moviepy import ImageSequenceClip
+    from modnet_infer_video import apply_modnet_video
+
+    cap = cv2.VideoCapture(str(input_path))
+    if not cap.isOpened():
+        print(f"❌ Cannot open video: {input_path}")
+        return False
+
+    fps = cap.get(cv2.CAP_PROP_FPS) or 25
+    w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Background setup
+    bg_image = None
+    if mode == "custom" and bg_path:
+        bg_image = cv2.imread(str(bg_path))
+        if bg_image is not None:
+            bg_image = cv2.resize(bg_image, (w, h))
+        else:
+            print(f"⚠️ Could not read background image: {bg_path}")
+
+    bgcolor = tuple(int(color.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
+    frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    print(f"🎞 Processing {frame_count} frames from {input_path}")
+
+    frames = []
+    start_time = time.time()
+    idx = 0
+
+    while True:
+        ret, frame = cap.read()
+        if not ret or frame is None:
+            break
+        try:
+            result = apply_modnet_video(frame, mode=mode, bgcolor=bgcolor, bg_image=bg_image)
+            # Convert from BGR to RGB for MoviePy
+            frames.append(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
+        except Exception as e:
+            print(f"⚠️ Frame {idx} error: {e}")
+        idx += 1
+
+    cap.release()
+
+    if not frames:
+        print("❌ No frames processed.")
+        return False
+
+    # =====================================================
+    # Write using MoviePy (pure Python, no external FFmpeg)
+    # =====================================================
+    try:
+        clip = ImageSequenceClip(frames, fps=fps)
+        clip.write_videofile(
+            str(output_path),
+            codec="libx264",
+            audio=False,
+            preset="medium",
+            ffmpeg_params=["-movflags", "+faststart"]
+        )
+        print(f"✅ Saved processed video: {output_path} ({time.time() - start_time:.2f}s)")
+        return True
+    except Exception as e:
+        print(f"❌ Error writing video with MoviePy: {e}")
+        return False
+
+
