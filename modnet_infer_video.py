@@ -9,6 +9,8 @@ import numpy as np
 import torch
 from pathlib import Path
 
+from tqdm import tqdm
+
 ROOT = Path(__file__).resolve().parent  # project root
 MODNET_PATH = ROOT / "thirdparty" / "MODNet" / "src"
 if str(MODNET_PATH) not in sys.path:
@@ -120,7 +122,7 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
     start_time = time.time()
     idx = 0
 
-    while True:
+    for idx in tqdm(range(frame_count), desc="Processing frames", ncols=80):
         ret, frame = cap.read()
         if not ret or frame is None:
             break
