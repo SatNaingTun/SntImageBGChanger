@@ -109,14 +109,14 @@ document.getElementById('uploadBtn').onclick = async () => {
 
   const statusMsg = document.getElementById('statusMsg');
   const processedVideo = document.getElementById('processedVideo');
-  const downloadLink = document.getElementById('downloadLink');
+  // const downloadLink = document.getElementById('downloadLink');
   const progressContainer = document.getElementById('progressContainer');
   const progressBar = document.getElementById('progressBar');
 
   // Reset UI
   statusMsg.textContent = "⏳ Uploading and processing...";
   processedVideo.style.display = "none";
-  downloadLink.style.display = "none";
+  // downloadLink.style.display = "none";
   progressContainer.style.display = "block";
   progressBar.style.width = "0%";
   progressBar.textContent = "0%";
@@ -188,16 +188,32 @@ document.getElementById('uploadBtn').onclick = async () => {
       await new Promise(r => setTimeout(r, 1000));
     }
 
-    if (fileReady) {
-      processedVideo.src = outputUrl + "?t=" + Date.now();
-      processedVideo.load();
-      processedVideo.style.display = "block";
-      downloadLink.href = outputUrl;
-      downloadLink.style.display = "inline-block";
-      statusMsg.textContent = "✅ Video ready to view!";
-    } else {
-      statusMsg.textContent = "⚠️ Video file is taking longer to finalize. Try refreshing.";
-    }
+   if (fileReady) {
+        processedVideo.src = outputUrl + "?t=" + Date.now();
+        processedVideo.load();
+        processedVideo.style.display = "block";
+
+        // Show both buttons
+        const viewLink = document.getElementById('viewLink');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const resultButtons = document.getElementById('resultButtons');
+
+        viewLink.href = outputUrl;
+        resultButtons.style.display = "flex";
+
+        // ✅ Direct download action
+        downloadBtn.onclick = () => {
+          const link = document.createElement("a");
+          link.href = outputUrl;
+          link.download = outputUrl.split("/").pop() || "processed_video.mp4";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
+  statusMsg.textContent = "✅ Video ready to view or download!";
+}
+
 
   } catch (err) {
     console.error("Error during upload:", err);
