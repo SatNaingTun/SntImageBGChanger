@@ -12,6 +12,7 @@ Functions:
     cleanup_progress(dir, max_files)
 """
 
+import os
 import json, time
 from pathlib import Path
 
@@ -26,13 +27,13 @@ def start_progress(progress_file: str, stage: str = "starting"):
 
 
 def set_progress(progress_file: str, current: int, total: int, stage: str = "processing"):
-    """Update percentage and stage."""
-    if not progress_file:
-        return
     progress = round((current / max(total, 1)) * 100, 1)
-    Path(progress_file).write_text(json.dumps({
-        "progress": progress, "stage": stage, "timestamp": time.time()
-    }))
+    data = {"progress": progress, "stage": stage, "timestamp": time.time()}
+    with open(progress_file, "w", encoding="utf-8") as f:
+        json.dump(data, f)
+        f.flush()        # ✅ flush buffer
+        os.fsync(f.fileno())  # ✅ ensure written to disk
+
 
 
 def complete_progress(progress_file: str):

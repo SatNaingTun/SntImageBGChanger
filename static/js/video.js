@@ -26,7 +26,7 @@ document.getElementById('bg_file').addEventListener('change', e => {
 });
 
 // ======================================================
-// 🔹 Upload and Process Video (with progress bar)
+// 🔹 Upload and Process Video (with Progress Bar)
 // ======================================================
 document.getElementById('uploadBtn').onclick = async () => {
   const videoInput = document.getElementById('videoUpload');
@@ -48,15 +48,17 @@ document.getElementById('uploadBtn').onclick = async () => {
   const progressContainer = document.getElementById('progressContainer');
   const progressBar = document.getElementById('progressBar');
 
+  // ✅ Reset UI
   statusMsg.textContent = "⏳ Uploading and processing...";
   processedVideo.style.display = "none";
   downloadLink.style.display = "none";
   progressContainer.style.display = "block";
   progressBar.style.width = "0%";
   progressBar.textContent = "0%";
-  progressBar.style.background = "linear-gradient(90deg, #007bff, #00d4ff)";
+  progressBar.style.background = "linear-gradient(90deg,#007bff,#00d4ff)";
 
   try {
+    // Send the video to backend for processing
     const res = await fetch("/api/video/process_video", { method: "POST", body: formData });
     const data = await res.json();
 
@@ -69,31 +71,48 @@ document.getElementById('uploadBtn').onclick = async () => {
     const outputUrl = data.output_url;
     let finished = false;
 
+    // ======================================================
+    // 🔁 Poll backend for progress every second
+    // ======================================================
     while (!finished) {
-      const resp = await fetch(progressUrl);
-      const prog = await resp.json();
-      const pct = prog.progress || 0;
+      try {
+        // ✅ Fetch fresh data every time (prevent caching)
+        const resp = await fetch(progressUrl + `?t=${Date.now()}`, { cache: "no-store" });
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
 
-      progressBar.style.width = pct + "%";
-      progressBar.textContent = pct.toFixed(1) + "%";
+        const prog = await resp.json();
+        const pct = Number(prog.progress || 0);
+        const stage = prog.stage || "processing";
 
-      if (prog.stage === "done" || prog.stage === "failed") {
-        finished = true;
-        break;
+        // Debug log
+        console.log(`Progress: ${pct.toFixed(1)}% | Stage: ${stage}`);
+
+        // Update progress bar
+        progressBar.style.width = pct + "%";
+        progressBar.textContent = pct.toFixed(1) + "%";
+
+        if (stage === "done" || stage === "failed" || pct >= 100) {
+          finished = true;
+        }
+      } catch (err) {
+        console.warn("Progress fetch failed:", err);
       }
+
+      // Wait 1 second before next check
       await new Promise(r => setTimeout(r, 1000));
     }
 
-    if (finished) {
-      progressBar.style.width = "100%";
-      progressBar.textContent = "100%";
-      progressBar.style.background = "linear-gradient(90deg,#28a745,#00e676)";
-      statusMsg.textContent = "✅ Processing complete!";
-      processedVideo.src = outputUrl;
-      processedVideo.style.display = "block";
-      downloadLink.href = outputUrl;
-      downloadLink.style.display = "inline-block";
-    }
+    // ======================================================
+    // ✅ Processing complete
+    // ======================================================
+    progressBar.style.width = "100%";
+    progressBar.textContent = "100%";
+    progressBar.style.background = "linear-gradient(90deg,#28a745,#00e676)";
+    statusMsg.textContent = "✅ Processing complete!";
+    processedVideo.src = outputUrl;
+    processedVideo.style.display = "block";
+    downloadLink.href = outputUrl;
+    downloadLink.style.display = "inline-block";
   } catch (err) {
     console.error("Error during upload:", err);
     statusMsg.textContent = "❌ Error during upload or processing.";

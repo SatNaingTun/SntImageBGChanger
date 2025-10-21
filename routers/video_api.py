@@ -6,7 +6,9 @@ from concurrent.futures import ThreadPoolExecutor
 from modnet_infer_video import apply_modnet_video,apply_modnet_video_file
 import uuid
 from routers.CleanFiles import cleanup_old_files
-from progress import read_progress
+from progress import read_progress,start_progress
+import json
+
 
 
 router = APIRouter(prefix="/api/video", tags=["AJAX Video API"])
@@ -84,56 +86,51 @@ async def process_frame(
 # =================================================
 # 🎞️ PROCESS FULL VIDEO (for Upload tab)
 # =================================================
+from fastapi import BackgroundTasks
+
 @router.post("/process_video")
 async def process_video(
+    background_tasks: BackgroundTasks,
     mode: str = Form("color"),
     color: str = Form("#00ff00"),
     file: UploadFile = File(...),
     bg_file: UploadFile = File(None),
 ):
-    """
-    Handle full uploaded video and run MODNet inference asynchronously.
-    Supports:
-      - Solid color background
-      - Custom background image
-      - Transparent background
-    """
     file_id = str(uuid.uuid4())[:8]
-    input_path = UPLOAD_DIR / f"input_{file_id}.mp4"
-    output_path = CHANGED_VIDEO_DIR / f"output_{file_id}.mp4"
+    input_path = (UPLOAD_DIR / f"input_{file_id}.mp4").resolve()
+    output_path = (CHANGED_VIDEO_DIR / f"output_{file_id}.mp4").resolve()
     progress_path = (CHANGED_VIDEO_DIR / f"progress_{file_id}.json").resolve()
     bg_path = None
 
-    # Save uploaded video
+    # Save uploaded files
     with open(input_path, "wb") as f:
         f.write(await file.read())
 
-    # Optional background image
     if bg_file:
-        bg_path = UPLOAD_DIR / f"bg_{file_id}.jpg"
+        bg_path = (UPLOAD_DIR / f"bg_{file_id}.jpg").resolve()
         with open(bg_path, "wb") as f:
             f.write(await bg_file.read())
 
-    # Run inference in background thread
-    loop = asyncio.get_running_loop()
-    await loop.run_in_executor(
-        executor,
+    start_progress(progress_path, "starting")
+
+    # ✅ Schedule background execution (non-blocking)
+    background_tasks.add_task(
         apply_modnet_video_file,
         str(input_path),
         str(output_path),
         mode,
         color,
         str(bg_path) if bg_path else None,
-        str(progress_path),
+        str(progress_path)
     )
 
-    # Clean old files
-    cleanup_old_files(CHANGED_VIDEO_DIR, max_files=20)
-    cleanup_old_files(UPLOAD_DIR, max_files=5)
+    # ✅ Immediately return response so progress can be polled
+    return {
+        "result": "processing",
+        "progress_id": file_id,
+        "output_url": f"/video/changedVideo/{output_path.name}"
+    }
 
-    # Return path to processed video
-    rel_path = f"/video/changedVideo/{output_path.name}"
-    return {"result": "done", "output_url": rel_path,"progress_id": file_id}
 
 
 @router.get("/download/{filename}")
@@ -154,14 +151,31 @@ from fastapi.responses import JSONResponse
 
 @router.get("/progress/{file_id}")
 async def get_progress(file_id: str):
-    """Return current progress percentage with cache disabled."""
+    """Return live progress percentage (force fresh read)."""
     progress_file = (CHANGED_VIDEO_DIR / f"progress_{file_id}.json").resolve()
-    data = read_progress(progress_file)
+    
+    # ✅ Wait briefly if file is still being written
+    if not progress_file.exists():
+        return {"progress": 0.0, "stage": "initializing"}
+    
+    try:
+        # ✅ Force system to read the newest version of file
+        #   Flush filesystem cache by reopening and re-reading each time
+        with open(progress_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+    except Exception as e:
+        print("⚠️ Error reading progress file:", e)
+        data = {"progress": 0.0, "stage": "unknown"}
 
-    # ✅ Disable HTTP caching
+    # ✅ Add timestamp + anti-cache headers
+    data["timestamp"] = time.time()
     headers = {
         "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
         "Pragma": "no-cache",
-        "Expires": "0"
+        "Expires": "0",
     }
+
+    # ✅ Optional debug log
+    # print(f"📄 Progress read ({file_id}): {data}")
+
     return JSONResponse(content=data, headers=headers)

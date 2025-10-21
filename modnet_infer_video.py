@@ -137,6 +137,8 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
             print(f"⚠️ Frame {idx} error: {e}")
         # idx += 1
         set_progress(progress_file, idx + 1, frame_count, "processing")
+        # print("📁 Writing progress to:", progress_file)
+
 
     cap.release()
 
@@ -157,8 +159,9 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
             preset="medium",
             ffmpeg_params=["-movflags", "+faststart"]
         )
-        complete_progress(progress_file)
+        
         print(f"✅ Saved processed video: {output_path} ({time.time() - start_time:.2f}s)")
+        complete_progress(progress_file)
         return True
     except Exception as e:
         fail_progress(progress_file)
