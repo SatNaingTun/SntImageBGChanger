@@ -11,22 +11,65 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 });
 
 // ======================================================
-// 🔹 Background Preview
+// 🔹 Dynamic UI Visibility for Mode Options
 // ======================================================
-document.getElementById('bg_file').addEventListener('change', e => {
-  const file = e.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = () => {
-    const preview = document.getElementById('bg_preview');
-    preview.src = reader.result;
-    preview.style.display = 'inline';
-  };
-  reader.readAsDataURL(file);
-});
+const modeSelect = document.getElementById("modeSelect");
+const colorPicker = document.getElementById("colorPicker");
+const bgLabel = document.getElementById("bgLabel");
+const bgFile = document.getElementById("bg_file");
+const bgPreview = document.getElementById("bg_preview");
+const blurContainer = document.getElementById("blurContainer");
+const blurRange = document.getElementById("blurRange");
+const blurValue = document.getElementById("blurValue");
+
+function updateModeUI() {
+  const mode = modeSelect.value;
+  colorPicker.style.display = "none";
+  bgLabel.style.display = "none";
+  bgPreview.style.display = "none";
+  blurContainer.style.display = "none";
+
+  if (mode === "color") {
+    colorPicker.style.display = "inline-block";
+  } else if (mode === "custom") {
+    bgLabel.style.display = "inline-block";
+    if (bgFile.files.length > 0) bgPreview.style.display = "inline-block";
+  } else if (mode === "blur") {
+    blurContainer.style.display = "flex";
+  }
+}
+modeSelect.addEventListener("change", updateModeUI);
+updateModeUI(); // initialize on load
 
 // ======================================================
-// 🔹 Upload and Process Video (with Progress Bar)
+// 🔹 Blur slider display value
+// ======================================================
+if (blurRange && blurValue) {
+  blurRange.addEventListener("input", () => {
+    blurValue.textContent = blurRange.value;
+  });
+}
+
+// ======================================================
+// 🔹 Background Preview
+// ======================================================
+if (bgFile) {
+  bgFile.addEventListener("change", e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      bgPreview.src = reader.result;
+      if (modeSelect.value === "custom") {
+        bgPreview.style.display = "inline-block";
+      }
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ======================================================
+// 🔹 Upload and Process Video (with Frame Progress)
 // ======================================================
 document.getElementById('uploadBtn').onclick = async () => {
   const videoInput = document.getElementById('videoUpload');
@@ -37,10 +80,11 @@ document.getElementById('uploadBtn').onclick = async () => {
 
   const formData = new FormData();
   formData.append("file", videoInput.files[0]);
-  formData.append("mode", document.getElementById("modeSelect").value);
-  formData.append("color", document.getElementById("colorPicker").value);
-  const bgFile = document.getElementById("bg_file").files[0];
-  if (bgFile) formData.append("bg_file", bgFile);
+  formData.append("mode", modeSelect.value);
+  formData.append("color", colorPicker.value);
+  formData.append("blur_strength", blurRange.value);
+  const bgFileInput = document.getElementById("bg_file").files[0];
+  if (bgFileInput) formData.append("bg_file", bgFileInput);
 
   const statusMsg = document.getElementById('statusMsg');
   const processedVideo = document.getElementById('processedVideo');
@@ -48,7 +92,7 @@ document.getElementById('uploadBtn').onclick = async () => {
   const progressContainer = document.getElementById('progressContainer');
   const progressBar = document.getElementById('progressBar');
 
-  // ✅ Reset UI
+  // Reset UI
   statusMsg.textContent = "⏳ Uploading and processing...";
   processedVideo.style.display = "none";
   downloadLink.style.display = "none";
@@ -72,47 +116,68 @@ document.getElementById('uploadBtn').onclick = async () => {
     let finished = false;
 
     // ======================================================
-    // 🔁 Poll backend for progress every second
+    // 🔁 Poll backend for frame-based progress
     // ======================================================
     while (!finished) {
       try {
-        // ✅ Fetch fresh data every time (prevent caching)
         const resp = await fetch(progressUrl + `?t=${Date.now()}`, { cache: "no-store" });
         if (!resp.ok) throw new Error("HTTP " + resp.status);
 
         const prog = await resp.json();
         const pct = Number(prog.progress || 0);
         const stage = prog.stage || "processing";
-
-        // Debug log
-        console.log(`Progress: ${pct.toFixed(1)}% | Stage: ${stage}`);
+        const frameIdx = prog.frame_index || 0;
+        const frameTotal = prog.frame_total || 0;
+        const framePct = frameTotal > 0 ? (frameIdx / frameTotal) * 100 : pct;
 
         // Update progress bar
-        progressBar.style.width = pct + "%";
-        progressBar.textContent = pct.toFixed(1) + "%";
+        progressBar.style.width = framePct.toFixed(1) + "%";
+        progressBar.textContent = framePct.toFixed(1) + "%";
+        console.log(`Progress: ${framePct.toFixed(1)}% | Frame ${frameIdx}/${frameTotal} | Stage: ${stage}`);
 
-        if (stage === "done" || stage === "failed" || pct >= 100) {
+        if ((framePct >= 100 && stage === "done") || stage === "failed") {
           finished = true;
         }
       } catch (err) {
         console.warn("Progress fetch failed:", err);
       }
 
-      // Wait 1 second before next check
-      await new Promise(r => setTimeout(r, 1000));
+      await new Promise(r => setTimeout(r, 1000)); // wait 1 second
     }
 
     // ======================================================
-    // ✅ Processing complete
+    // ✅ Wait until file is ready and then display video
     // ======================================================
     progressBar.style.width = "100%";
     progressBar.textContent = "100%";
     progressBar.style.background = "linear-gradient(90deg,#28a745,#00e676)";
-    statusMsg.textContent = "✅ Processing complete!";
-    processedVideo.src = outputUrl;
-    processedVideo.style.display = "block";
-    downloadLink.href = outputUrl;
-    downloadLink.style.display = "inline-block";
+    statusMsg.textContent = "✅ Processing complete! Finalizing file...";
+
+    let fileReady = false;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      try {
+        const headCheck = await fetch(outputUrl, { method: "HEAD", cache: "no-store" });
+        if (headCheck.ok) {
+          fileReady = true;
+          break;
+        }
+      } catch (e) {
+        console.warn("Video readiness check failed:", e);
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    if (fileReady) {
+      processedVideo.src = outputUrl + "?t=" + Date.now();
+      processedVideo.load();
+      processedVideo.style.display = "block";
+      downloadLink.href = outputUrl;
+      downloadLink.style.display = "inline-block";
+      statusMsg.textContent = "✅ Video ready to view!";
+    } else {
+      statusMsg.textContent = "⚠️ Video file is taking longer to finalize. Try refreshing.";
+    }
+
   } catch (err) {
     console.error("Error during upload:", err);
     statusMsg.textContent = "❌ Error during upload or processing.";

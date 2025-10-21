@@ -95,6 +95,8 @@ async def process_video(
     color: str = Form("#00ff00"),
     file: UploadFile = File(...),
     bg_file: UploadFile = File(None),
+    blur_strength: int = Form(25),
+
 ):
     file_id = str(uuid.uuid4())[:8]
     input_path = (UPLOAD_DIR / f"input_{file_id}.mp4").resolve()
@@ -121,7 +123,8 @@ async def process_video(
         mode,
         color,
         str(bg_path) if bg_path else None,
-        str(progress_path)
+        str(progress_path),
+        blur_strength
     )
 
     # ✅ Immediately return response so progress can be polled

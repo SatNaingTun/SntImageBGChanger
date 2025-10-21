@@ -73,7 +73,8 @@ def apply_modnet_video_blur(frame, blur_strength=25):
 # --------------------------------------------------
 # 🧠 INFERENCE FUNCTION
 # --------------------------------------------------
-def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=None):
+def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=None, blur_strength=25):
+
     """
     Apply MODNet portrait matting for webcam frames.
     mode: 'color', 'custom', 'transparent'
@@ -104,9 +105,11 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
         return result.astype(np.uint8)
     
     elif mode == "blur":
-        blurred_bg = cv2.GaussianBlur(fg, (25, 25), 0)
+        k = max(3, int(blur_strength) // 2 * 2 + 1)  # make sure kernel size is odd
+        blurred_bg = cv2.GaussianBlur(fg, (k, k), 0)
         result = (fg * matte_3 + blurred_bg * (1 - matte_3)) * 255
         return result.astype(np.uint8)
+
 
     else:  # solid color background
         bg = np.full_like(frame, bgcolor, dtype=np.uint8).astype(np.float32) / 255.0
@@ -116,7 +119,8 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
 # =====================================================
 # 🎬 Apply MODNet on full video using MoviePy
 # =====================================================
-def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff00", bg_path=None,progress_file=None):
+def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff00", bg_path=None, progress_file=None, blur_strength=25):
+
     """
     Process a full video with MODNet using MoviePy for writing.
     This version does not require an external FFmpeg installation.
@@ -157,7 +161,8 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
         if not ret or frame is None:
             break
         try:
-            result = apply_modnet_video(frame, mode=mode, bgcolor=bgcolor, bg_image=bg_image)
+            result = apply_modnet_video(frame, mode=mode, bgcolor=bgcolor, bg_image=bg_image, blur_strength=blur_strength)
+
             # Convert from BGR to RGB for MoviePy
             frames.append(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
         except Exception as e:

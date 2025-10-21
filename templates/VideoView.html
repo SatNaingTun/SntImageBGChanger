@@ -64,11 +64,23 @@
           <option value="blur">Blur Background</option>
           <option value="transparent">Remove Background</option>
         </select>
-        <input type="color" id="colorPicker" value="#00ff00">
-        <label for="bg_file" class="btn-upload"> Upload BG</label>
-        <input type="file" id="bg_file" accept="image/*" style="display:none;">
-        <img id="bg_preview" alt="BG Preview" style="max-height:60px; display:none; border-radius:4px;">
+          <!-- Color Picker -->
+          <input type="color" id="colorPicker" value="#00ff00" style="display:none;">
+
+          <!-- Custom BG Upload -->
+          <label for="bg_file" id="bgLabel" class="btn-upload" style="display:none;">🖼 Upload BG</label>
+          <input type="file" id="bg_file" accept="image/*" style="display:none;">
+          <img id="bg_preview" alt="BG Preview" style="max-height:60px; display:none; border-radius:4px;">
+
+          <!-- Blur Strength Slider -->
+          <div id="blurContainer" class="option-select" style="display:none;">
+            <label>Blur Intensity:</label>
+            <input type="range" id="blurRange" min="3" max="99" step="2" value="25">
+            <span id="blurValue">25</span>
+          </div>
       </div>
+
+     
 
       <!-- ====== Upload Video Tab ====== -->
       <div id="upload-tab" class="tab-content active">
