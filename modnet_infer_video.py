@@ -47,6 +47,28 @@ print(f"✅ Webcam MODNet loaded. Missing: {len(missing)}, Unexpected: {len(unex
 
 modnet_webcam.eval()
 
+# ==============================
+# 🔹 New: Blur Background Support
+# ==============================
+def apply_modnet_video_blur(frame, blur_strength=25):
+    """Apply MODNet matting and blur the background."""
+    image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+    image = cv2.resize(image, (512, 512), interpolation=cv2.INTER_AREA)
+    image = image.astype(np.float32) / 255.0
+    image_tensor = torch.from_numpy(image.transpose(2, 0, 1)).unsqueeze(0).to(device)
+
+    with torch.no_grad():
+        _, _, matte = modnet_webcam(image_tensor, True)
+
+    matte = matte[0][0].cpu().numpy()
+    matte = cv2.resize(matte, (frame.shape[1], frame.shape[0]), interpolation=cv2.INTER_LINEAR)
+    matte_3 = np.repeat(matte[:, :, np.newaxis], 3, axis=2)
+
+    fg = frame.astype(np.float32) / 255.0
+    blurred_bg = cv2.GaussianBlur(fg, (blur_strength, blur_strength), 0)
+
+    result = (fg * matte_3 + blurred_bg * (1 - matte_3)) * 255
+    return result.astype(np.uint8)
 
 # --------------------------------------------------
 # 🧠 INFERENCE FUNCTION
@@ -79,6 +101,11 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
         bg_resized = cv2.resize(bg_image, (w, h))
         bg = bg_resized.astype(np.float32) / 255.0
         result = (fg * matte_3 + bg * (1 - matte_3)) * 255
+        return result.astype(np.uint8)
+    
+    elif mode == "blur":
+        blurred_bg = cv2.GaussianBlur(fg, (25, 25), 0)
+        result = (fg * matte_3 + blurred_bg * (1 - matte_3)) * 255
         return result.astype(np.uint8)
 
     else:  # solid color background
