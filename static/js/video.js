@@ -26,7 +26,7 @@ document.getElementById('bg_file').addEventListener('change', e => {
 });
 
 // ======================================================
-// 🔹 Upload and Process Video
+// 🔹 Upload and Process Video (with progress bar)
 // ======================================================
 document.getElementById('uploadBtn').onclick = async () => {
   const videoInput = document.getElementById('videoUpload');
@@ -39,33 +39,61 @@ document.getElementById('uploadBtn').onclick = async () => {
   formData.append("file", videoInput.files[0]);
   formData.append("mode", document.getElementById("modeSelect").value);
   formData.append("color", document.getElementById("colorPicker").value);
-
   const bgFile = document.getElementById("bg_file").files[0];
   if (bgFile) formData.append("bg_file", bgFile);
 
   const statusMsg = document.getElementById('statusMsg');
   const processedVideo = document.getElementById('processedVideo');
   const downloadLink = document.getElementById('downloadLink');
+  const progressContainer = document.getElementById('progressContainer');
+  const progressBar = document.getElementById('progressBar');
 
   statusMsg.textContent = "⏳ Uploading and processing...";
   processedVideo.style.display = "none";
   downloadLink.style.display = "none";
+  progressContainer.style.display = "block";
+  progressBar.style.width = "0%";
+  progressBar.textContent = "0%";
+  progressBar.style.background = "linear-gradient(90deg, #007bff, #00d4ff)";
 
   try {
     const res = await fetch("/api/video/process_video", { method: "POST", body: formData });
     const data = await res.json();
 
-    if (!data.output_url) {
+    if (!data.progress_id) {
       statusMsg.textContent = "❌ Processing failed.";
       return;
     }
 
-    const url = data.output_url;
-    statusMsg.textContent = "✅ Done! Processed video ready.";
-    processedVideo.src = url;
-    processedVideo.style.display = "block";
-    downloadLink.href = url;
-    downloadLink.style.display = "inline-block";
+    const progressUrl = `/api/video/progress/${data.progress_id}`;
+    const outputUrl = data.output_url;
+    let finished = false;
+
+    while (!finished) {
+      const resp = await fetch(progressUrl);
+      const prog = await resp.json();
+      const pct = prog.progress || 0;
+
+      progressBar.style.width = pct + "%";
+      progressBar.textContent = pct.toFixed(1) + "%";
+
+      if (prog.stage === "done" || prog.stage === "failed") {
+        finished = true;
+        break;
+      }
+      await new Promise(r => setTimeout(r, 1000));
+    }
+
+    if (finished) {
+      progressBar.style.width = "100%";
+      progressBar.textContent = "100%";
+      progressBar.style.background = "linear-gradient(90deg,#28a745,#00e676)";
+      statusMsg.textContent = "✅ Processing complete!";
+      processedVideo.src = outputUrl;
+      processedVideo.style.display = "block";
+      downloadLink.href = outputUrl;
+      downloadLink.style.display = "inline-block";
+    }
   } catch (err) {
     console.error("Error during upload:", err);
     statusMsg.textContent = "❌ Error during upload or processing.";

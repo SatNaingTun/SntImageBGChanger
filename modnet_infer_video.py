@@ -8,6 +8,8 @@ import cv2
 import numpy as np
 import torch
 from pathlib import Path
+from progress import start_progress, set_progress, complete_progress, fail_progress
+
 
 from tqdm import tqdm
 
@@ -87,7 +89,7 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
 # =====================================================
 # 🎬 Apply MODNet on full video using MoviePy
 # =====================================================
-def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff00", bg_path=None):
+def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff00", bg_path=None,progress_file=None):
     """
     Process a full video with MODNet using MoviePy for writing.
     This version does not require an external FFmpeg installation.
@@ -120,7 +122,8 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
 
     frames = []
     start_time = time.time()
-    idx = 0
+    if progress_file:
+        start_progress(progress_file, "processing")
 
     for idx in tqdm(range(frame_count), desc="Processing frames", ncols=80):
         ret, frame = cap.read()
@@ -132,11 +135,13 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
             frames.append(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
         except Exception as e:
             print(f"⚠️ Frame {idx} error: {e}")
-        idx += 1
+        # idx += 1
+        set_progress(progress_file, idx + 1, frame_count, "processing")
 
     cap.release()
 
     if not frames:
+        fail_progress(progress_file)
         print("❌ No frames processed.")
         return False
 
@@ -152,9 +157,11 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
             preset="medium",
             ffmpeg_params=["-movflags", "+faststart"]
         )
+        complete_progress(progress_file)
         print(f"✅ Saved processed video: {output_path} ({time.time() - start_time:.2f}s)")
         return True
     except Exception as e:
+        fail_progress(progress_file)
         print(f"❌ Error writing video with MoviePy: {e}")
         return False
 

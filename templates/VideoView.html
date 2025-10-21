@@ -21,6 +21,26 @@
     .btn-download { background: #17a2b8; color: white; padding: 8px 14px; border-radius: 6px; text-decoration: none; display: inline-block; margin-top: 10px; }
     .preview { width: 100%; border-radius: 8px; border: 1px solid #ccc; margin-top: 10px; display: none; }
 
+    /* ✅ Progress bar styles */
+    #progressContainer { 
+      width: 100%; 
+      background: #eee; 
+      border-radius: 8px; 
+      height: 22px; 
+      margin-top: 10px; 
+      display: none;
+    }
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #007bff, #00d4ff);
+      border-radius: 8px;
+      text-align: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
     video#video { border-radius: 8px; border: 1px solid #ccc; }
   </style>
 </head>
@@ -57,13 +77,18 @@
             <button id="uploadBtn" class="btn-primary">🚀 Process Video</button>
             <p id="statusMsg" style="margin:0; font-weight:500;"></p>
           </div>
+
+          <!-- ✅ Progress Bar Container -->
+          <div id="progressContainer">
+            <div id="progressBar">0%</div>
+          </div>
         </div>
 
         <video id="processedVideo" controls class="preview"></video>
         <a id="downloadLink" class="btn-download" style="display:none;">⬇ Download Processed Video</a>
       </div>
 
-      <!-- ====== Webcam Tab ====== -->
+      <!-- Webcam tab unchanged -->
       <div id="webcam-tab" class="tab-content">
         <div class="controls">
           <div class="option-select">

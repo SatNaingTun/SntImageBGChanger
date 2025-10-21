@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from modnet_infer_video import apply_modnet_video,apply_modnet_video_file
 import uuid
 from routers.CleanFiles import cleanup_old_files
+from progress import read_progress
 
 
 router = APIRouter(prefix="/api/video", tags=["AJAX Video API"])
@@ -20,6 +21,7 @@ CHANGED_VIDEO_DIR = BASE_DIR / "changedVideo"
 CHANGED_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 UPLOAD_DIR = BASE_DIR / "upload"
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
 
 executor = ThreadPoolExecutor(max_workers=3)
 
@@ -99,6 +101,7 @@ async def process_video(
     file_id = str(uuid.uuid4())[:8]
     input_path = UPLOAD_DIR / f"input_{file_id}.mp4"
     output_path = CHANGED_VIDEO_DIR / f"output_{file_id}.mp4"
+    progress_path = (CHANGED_VIDEO_DIR / f"progress_{file_id}.json").resolve()
     bg_path = None
 
     # Save uploaded video
@@ -121,6 +124,7 @@ async def process_video(
         mode,
         color,
         str(bg_path) if bg_path else None,
+        str(progress_path),
     )
 
     # Clean old files
@@ -129,7 +133,7 @@ async def process_video(
 
     # Return path to processed video
     rel_path = f"/video/changedVideo/{output_path.name}"
-    return {"result": "done", "output_url": rel_path}
+    return {"result": "done", "output_url": rel_path,"progress_id": file_id}
 
 
 @router.get("/download/{filename}")
@@ -146,3 +150,18 @@ async def download_video(filename: str):
         await asyncio.sleep(0.5)
 
     return FileResponse(path=file_path, filename=filename, media_type="video/mp4")
+from fastapi.responses import JSONResponse
+
+@router.get("/progress/{file_id}")
+async def get_progress(file_id: str):
+    """Return current progress percentage with cache disabled."""
+    progress_file = (CHANGED_VIDEO_DIR / f"progress_{file_id}.json").resolve()
+    data = read_progress(progress_file)
+
+    # ✅ Disable HTTP caching
+    headers = {
+        "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+        "Pragma": "no-cache",
+        "Expires": "0"
+    }
+    return JSONResponse(content=data, headers=headers)
