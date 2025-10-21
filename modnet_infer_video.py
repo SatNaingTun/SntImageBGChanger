@@ -120,12 +120,13 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
 # 🎬 Apply MODNet on full video using MoviePy
 # =====================================================
 def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff00", bg_path=None, progress_file=None, blur_strength=25):
+    """
+    Process full video with MODNet.
+    Supports image or video backgrounds.
+    If background video is shorter → loops.
+    If background video is longer → stops at foreground end.
+    """
 
-    """
-    Process a full video with MODNet using MoviePy for writing.
-    This version does not require an external FFmpeg installation.
-    """
-    
     from moviepy import ImageSequenceClip
     from modnet_infer_video import apply_modnet_video
 
@@ -137,51 +138,79 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
     fps = cap.get(cv2.CAP_PROP_FPS) or 25
     w = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     h = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-
-    # Background setup
-    bg_image = None
-    if mode == "custom" and bg_path:
-        bg_image = cv2.imread(str(bg_path))
-        if bg_image is not None:
-            bg_image = cv2.resize(bg_image, (w, h))
-        else:
-            print(f"⚠️ Could not read background image: {bg_path}")
-
-    bgcolor = tuple(int(color.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
     frame_count = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
     print(f"🎞 Processing {frame_count} frames from {input_path}")
 
+    # -----------------------------------------------------
+    # 🔹 Background setup
+    # -----------------------------------------------------
+    bg_image = None
+    bg_cap = None
+    bg_is_video = False
+
+    if mode == "custom" and bg_path:
+        ext = Path(bg_path).suffix.lower()
+        if ext in [".mp4", ".mov", ".avi", ".mkv"]:
+            bg_cap = cv2.VideoCapture(str(bg_path))
+            if bg_cap.isOpened():
+                bg_is_video = True
+                bg_frame_count = int(bg_cap.get(cv2.CAP_PROP_FRAME_COUNT))
+                print(f"🎥 Background video loaded ({bg_frame_count} frames)")
+            else:
+                print(f"⚠️ Could not open background video: {bg_path}")
+        else:
+            bg_image = cv2.imread(str(bg_path))
+            if bg_image is not None:
+                bg_image = cv2.resize(bg_image, (w, h))
+            else:
+                print(f"⚠️ Could not read background image: {bg_path}")
+
+    bgcolor = tuple(int(color.lstrip("#")[i:i+2], 16) for i in (0, 2, 4))
     frames = []
-    start_time = time.time()
+
     if progress_file:
         start_progress(progress_file, "processing")
 
+    # -----------------------------------------------------
+    # 🎬 Frame-by-frame MODNet inference
+    # -----------------------------------------------------
     for idx in tqdm(range(frame_count), desc="Processing frames", ncols=80):
         ret, frame = cap.read()
         if not ret or frame is None:
             break
-        try:
-            result = apply_modnet_video(frame, mode=mode, bgcolor=bgcolor, bg_image=bg_image, blur_strength=blur_strength)
 
-            # Convert from BGR to RGB for MoviePy
+        # ----- Background frame logic -----
+        current_bg = None
+        if bg_is_video:
+            ret_bg, bg_frame = bg_cap.read()
+            if not ret_bg:  # Loop back to start if shorter
+                bg_cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                ret_bg, bg_frame = bg_cap.read()
+            if ret_bg:
+                current_bg = cv2.resize(bg_frame, (w, h))
+        elif bg_image is not None:
+            current_bg = bg_image
+
+        # ----- MODNet processing -----
+        try:
+            result = apply_modnet_video(frame, mode=mode, bgcolor=bgcolor, bg_image=current_bg, blur_strength=blur_strength)
             frames.append(cv2.cvtColor(result, cv2.COLOR_BGR2RGB))
         except Exception as e:
             print(f"⚠️ Frame {idx} error: {e}")
-        # idx += 1
-        set_progress(progress_file, idx + 1, frame_count, "processing")
-        # print("📁 Writing progress to:", progress_file)
 
+        set_progress(progress_file, idx + 1, frame_count, "processing")
 
     cap.release()
+    if bg_cap: bg_cap.release()
 
+    # -----------------------------------------------------
+    # 🧩 Write video
+    # -----------------------------------------------------
     if not frames:
         fail_progress(progress_file)
         print("❌ No frames processed.")
         return False
 
-    # =====================================================
-    # Write using MoviePy (pure Python, no external FFmpeg)
-    # =====================================================
     try:
         clip = ImageSequenceClip(frames, fps=fps)
         clip.write_videofile(
@@ -191,13 +220,13 @@ def apply_modnet_video_file(input_path, output_path, mode="color", color="#00ff0
             preset="medium",
             ffmpeg_params=["-movflags", "+faststart"]
         )
-        
-        print(f"✅ Saved processed video: {output_path} ({time.time() - start_time:.2f}s)")
+        print(f"✅ Saved processed video: {output_path}")
         complete_progress(progress_file)
         return True
     except Exception as e:
         fail_progress(progress_file)
-        print(f"❌ Error writing video with MoviePy: {e}")
+        print(f"❌ Error writing video: {e}")
         return False
+
 
 

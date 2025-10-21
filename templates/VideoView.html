@@ -67,10 +67,14 @@
           <!-- Color Picker -->
           <input type="color" id="colorPicker" value="#00ff00" style="display:none;">
 
-          <!-- Custom BG Upload -->
+          <!-- Custom BG Upload (Image or Video) -->
           <label for="bg_file" id="bgLabel" class="btn-upload" style="display:none;">🖼 Upload BG</label>
-          <input type="file" id="bg_file" accept="image/*" style="display:none;">
-          <img id="bg_preview" alt="BG Preview" style="max-height:60px; display:none; border-radius:4px;">
+          <input type="file" id="bg_file" accept="image/*,video/*" style="display:none;">
+          <div id="bgPreviewContainer" style="display:none;">
+            <img id="bg_preview_img" alt="BG Image Preview" style="max-height:60px; border-radius:4px; display:none;">
+            <video id="bg_preview_video" style="max-height:60px; border-radius:4px; display:none;" muted loop></video>
+          </div>
+
 
           <!-- Blur Strength Slider -->
           <div id="blurContainer" class="option-select" style="display:none;">

@@ -16,28 +16,37 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 const modeSelect = document.getElementById("modeSelect");
 const colorPicker = document.getElementById("colorPicker");
 const bgLabel = document.getElementById("bgLabel");
-const bgFile = document.getElementById("bg_file");
-const bgPreview = document.getElementById("bg_preview");
+const bgFileInput = document.getElementById("bg_file");
+const bgPreviewContainer = document.getElementById("bgPreviewContainer");
+const bgPreviewImg = document.getElementById("bg_preview_img");
+const bgPreviewVideo = document.getElementById("bg_preview_video");
 const blurContainer = document.getElementById("blurContainer");
 const blurRange = document.getElementById("blurRange");
 const blurValue = document.getElementById("blurValue");
 
 function updateModeUI() {
   const mode = modeSelect.value;
+
+  // Hide all optional controls by default
   colorPicker.style.display = "none";
   bgLabel.style.display = "none";
-  bgPreview.style.display = "none";
+  bgPreviewContainer.style.display = "none";
+  bgPreviewImg.style.display = "none";
+  bgPreviewVideo.style.display = "none";
   blurContainer.style.display = "none";
 
   if (mode === "color") {
     colorPicker.style.display = "inline-block";
   } else if (mode === "custom") {
     bgLabel.style.display = "inline-block";
-    if (bgFile.files.length > 0) bgPreview.style.display = "inline-block";
+    if (bgFileInput.files.length > 0) {
+      bgPreviewContainer.style.display = "inline-block";
+    }
   } else if (mode === "blur") {
     blurContainer.style.display = "flex";
   }
 }
+
 modeSelect.addEventListener("change", updateModeUI);
 updateModeUI(); // initialize on load
 
@@ -51,20 +60,32 @@ if (blurRange && blurValue) {
 }
 
 // ======================================================
-// 🔹 Background Preview
+// 🔹 Background Preview (Image or Video)
 // ======================================================
-if (bgFile) {
-  bgFile.addEventListener("change", e => {
+if (bgFileInput) {
+  bgFileInput.addEventListener("change", e => {
     const file = e.target.files[0];
     if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      bgPreview.src = reader.result;
-      if (modeSelect.value === "custom") {
-        bgPreview.style.display = "inline-block";
-      }
-    };
-    reader.readAsDataURL(file);
+
+    const url = URL.createObjectURL(file);
+
+    // Reset previews
+    bgPreviewImg.style.display = "none";
+    bgPreviewVideo.style.display = "none";
+    bgPreviewContainer.style.display = "none";
+
+    if (file.type.startsWith("image/")) {
+      bgPreviewImg.src = url;
+      bgPreviewImg.style.display = "inline-block";
+      bgPreviewContainer.style.display = "inline-block";
+    } else if (file.type.startsWith("video/")) {
+      bgPreviewVideo.src = url;
+      bgPreviewVideo.load();
+      bgPreviewVideo.play();
+      bgPreviewVideo.loop = true;
+      bgPreviewVideo.style.display = "inline-block";
+      bgPreviewContainer.style.display = "inline-block";
+    }
   });
 }
 
@@ -83,8 +104,8 @@ document.getElementById('uploadBtn').onclick = async () => {
   formData.append("mode", modeSelect.value);
   formData.append("color", colorPicker.value);
   formData.append("blur_strength", blurRange.value);
-  const bgFileInput = document.getElementById("bg_file").files[0];
-  if (bgFileInput) formData.append("bg_file", bgFileInput);
+  const bgFile = bgFileInput.files[0];
+  if (bgFile) formData.append("bg_file", bgFile);
 
   const statusMsg = document.getElementById('statusMsg');
   const processedVideo = document.getElementById('processedVideo');
