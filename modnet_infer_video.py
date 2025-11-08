@@ -1,6 +1,7 @@
 # ==========================================
 # modnet_infer_video.py
 # ==========================================
+import os
 import time
 import subprocess
 import sys
@@ -14,12 +15,31 @@ from progress import start_progress, set_progress, complete_progress, fail_progr
 from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parent  # project root
-MODNET_PATH = ROOT / "thirdparty" / "MODNet" / "src"
+THIRDPARTY_DIR = ROOT / "thirdparty"
+MODNET_PATH = THIRDPARTY_DIR / "MODNet" / "src"
+
+# Auto clone MODNet if missing
+if not MODNET_PATH.exists():
+    print(f"⚠️ MODNet not found at {MODNET_PATH}. Cloning repository...")
+    os.makedirs(THIRDPARTY_DIR, exist_ok=True)
+    repo_url = "https://github.com/ZHKKKe/MODNet.git"
+    try:
+        subprocess.run(
+            ["git", "clone", repo_url, str(THIRDPARTY_DIR / "MODNet")],
+            check=True
+        )
+        print("✅ MODNet successfully cloned.")
+    except subprocess.CalledProcessError as e:
+        raise RuntimeError(f"❌ Failed to clone MODNet: {e}")
+
+# Add MODNet src to sys.path
 if str(MODNET_PATH) not in sys.path:
     sys.path.append(str(MODNET_PATH))
 
+# Try import
 try:
     from models.modnet import MODNet
+    print("✅ MODNet imported successfully.")
 except ModuleNotFoundError as e:
     raise ImportError(f"❌ Could not import MODNet. Check path: {MODNET_PATH}\n{e}")
 

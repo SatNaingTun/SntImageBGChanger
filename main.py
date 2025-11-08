@@ -13,6 +13,17 @@ from routers import CleanFiles
 
 app = FastAPI(title="SNT Background Changer App")
 
+folders = [
+    "video",
+    "video/changed",
+    "images/upload",
+    "images/changed",
+    "images/background"
+]
+
+for folder in folders:
+    os.makedirs(folder, exist_ok=True)
+
 # ---------------- Templates ----------------
 templates = Jinja2Templates(directory="templates")
 
