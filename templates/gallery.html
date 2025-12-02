@@ -44,48 +44,190 @@
 
     .item:hover { transform: translateY(-3px); }
 
-    .thumb {
+    .thumb,
+    .thumb-img {
       width: 100%;
       height: 180px;
       object-fit: cover;
-      background: #eee;
+      background: #111;
+      display: block;
     }
 
-    .actions {
+    /* VIDEO THUMBNAIL */
+    .video-thumb {
+      position: relative;
       display: flex;
-      justify-content: space-around;
-      padding: 8px 0;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      cursor: pointer;
+      background: radial-gradient(circle at top, #333, #000);
+    }
+
+    .video-thumb img { opacity: 0.9; transition: opacity .2s; }
+
+    .play-overlay {
+      position: absolute;
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      backdrop-filter: blur(12px);
+      background: rgba(255,255,255,0.15);
+      display: flex; justify-content: center; align-items: center;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+    }
+
+    .play-overlay::before {
+      content: "";
+      margin-left: 4px;
+      border-style: solid;
+      border-width: 14px 0 14px 22px;
+      border-color: transparent transparent transparent white;
+    }
+
+    .item.video:hover .thumb-img { opacity: 1; }
+
+    .actions {
+      padding: 10px;
+      display: flex;
+      justify-content: space-evenly;
+      border-top: 1px solid #eee;
       background: #fafafa;
     }
 
     .btn {
-      border: none;
+      padding: 6px 12px;
       border-radius: 6px;
-      padding: 6px 10px;
-      cursor: pointer;
       font-size: 0.85rem;
-      font-weight: 500;
-      transition: 0.2s;
+      border: none;
+      cursor: pointer;
     }
 
-    .btn-play { background: #28a745; color: #fff; }
     .btn-download { background: #007bff; color: #fff; }
     .btn-delete { background: #dc3545; color: #fff; }
 
-    .btn:hover { opacity: 0.9; }
+    /* ===================== OVERLAY VIEWER ===================== */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 9999;
+    }
 
-    #loading {
-      text-align: center;
-      padding: 20px;
+    .overlay.hidden { display: none; }
+
+    .viewer-content {
+      position: relative;
+      width: 90%;
+      max-width: 1100px;
+      max-height: 90vh;
+    }
+
+    .viewer-header {
+      margin-bottom: 10px;
+      color: #fff;
+    }
+
+    .viewer-title {
+      font-size: 1.4rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .viewer-channel {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .channel-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #999;
+    }
+
+    .channel-info .channel-name {
       font-size: 1rem;
-      color: #555;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .channel-info .channel-sub {
+      font-size: .85rem;
+      color: #ccc;
+    }
+
+    #viewerContainer video,
+    #viewerContainer img {
+      width: 100%;
+      max-height: 75vh;
+      background: black;
+      border-radius: 12px;
+    }
+
+    .close-btn {
+      position: absolute;
+      right: -10px; top: -10px;
+      font-size: 40px;
+      color: #fff;
+      cursor: pointer;
+    }
+
+    .nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 48px;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .prev-btn { left: -50px; }
+    .next-btn { right: -50px; }
+
+    @media (max-width:900px) {
+      .prev-btn { left: 0; }
+      .next-btn { right: 0; }
     }
   </style>
 </head>
+
 <body>
   <header>🖼 MODNet Gallery</header>
+
   <main class="gallery" id="gallery"></main>
-  <div id="loading">⏳ Loading gallery...</div>
+  <div id="loading">⏳ Loading...</div>
+
+  <!-- =================== YOUTUBE-STYLE OVERLAY =================== -->
+  <div id="viewerOverlay" class="overlay hidden">
+    <div class="viewer-content">
+
+      <span id="viewerClose" class="close-btn">&times;</span>
+      <button id="viewerPrev" class="nav-btn prev-btn">&#10094;</button>
+      <button id="viewerNext" class="nav-btn next-btn">&#10095;</button>
+
+      <!-- HEADER -->
+      <div id="viewerHeader" class="viewer-header">
+        <div id="viewerTitle" class="viewer-title"></div>
+
+        <div class="viewer-channel">
+          <img src="/static/img/default-avatar.png" class="channel-avatar">
+          <div class="channel-info">
+            <div class="channel-name">MODNet Background Changer</div>
+            <div class="channel-sub">Preview Viewer</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="viewerContainer"></div>
+    </div>
+  </div>
 
   <script src="/static/js/gallery.js"></script>
 </body>
