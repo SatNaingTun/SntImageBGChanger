@@ -42,6 +42,7 @@ class NoCacheStaticFiles(StaticFiles):
         if response.status_code == 200:
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
+    
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Home Page"""
