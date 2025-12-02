@@ -42,6 +42,10 @@ class NoCacheStaticFiles(StaticFiles):
         if response.status_code == 200:
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
         return response
+@app.get("/", response_class=HTMLResponse)
+async def home(request: Request):
+    """Home Page"""
+    return templates.TemplateResponse("index.html", {"request": request})
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/video", StaticFiles(directory="video"), name="video")
@@ -70,7 +74,7 @@ async def load_heavy_routers():
         "routers.record_api",
         "routers.image_api",
         "routers.background_api",
-        "routers.modenet_api",
+        
     ]
 
     print("🚀 Loading routers asynchronously...")
@@ -83,10 +87,7 @@ async def load_heavy_routers():
     print("✅ All routers loaded asynchronously.")
 
 # ---------------- Web Pages ----------------
-@app.get("/", response_class=HTMLResponse)
-async def home(request: Request):
-    """Home Page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+
 
 @app.get("/gallery", response_class=HTMLResponse)
 async def gallery_page(request: Request):

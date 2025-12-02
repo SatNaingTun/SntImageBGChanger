@@ -3,7 +3,7 @@ from pathlib import Path
 from fastapi.responses import FileResponse, JSONResponse
 import cv2, numpy as np, base64, time, asyncio, json, uuid
 from concurrent.futures import ThreadPoolExecutor
-from modnet_infer_video import apply_modnet_video, apply_modnet_video_file
+from inference.modnet_infer_video import apply_modnet_video, apply_modnet_video_file
 from routers.CleanFiles import cleanup_old_files
 from progress import read_progress, start_progress
 

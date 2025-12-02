@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from pathlib import Path
 import cv2
 import numpy as np
-from modnet_infer import apply_modnet, apply_modnet_blur_background, apply_modnet_cutout_rgba
+from inference.modnet_infer import apply_modnet, apply_modnet_blur_background, apply_modnet_cutout_rgba
 from routers.CleanFiles import cleanup_old_files
 
 router = APIRouter(prefix="/api/image", tags=["AJAX Image API"])

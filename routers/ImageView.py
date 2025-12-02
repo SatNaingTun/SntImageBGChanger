@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import os
 
-from modnet_infer import apply_modnet, apply_modnet_cutout_rgba, apply_modnet_blur_background, extract_background
+from inference.modnet_infer import apply_modnet, apply_modnet_cutout_rgba, apply_modnet_blur_background, extract_background
 
 templates = Jinja2Templates(directory="templates")
 

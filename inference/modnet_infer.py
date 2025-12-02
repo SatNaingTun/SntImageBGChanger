@@ -11,7 +11,7 @@ import os
 # -------------------------------------------------------
 # Add path to official MODNet repo
 # -------------------------------------------------------
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parent.parent
 THIRDPARTY_DIR = ROOT / "thirdparty"
 MODNET_PATH = THIRDPARTY_DIR / "MODNet" / "src"
 
@@ -47,7 +47,7 @@ print(f"🧠 Using device: {device}")
 # Load your fine-tuned checkpoint
 # -------------------------------------------------------
 model_name = "modnet_finetuned_photographic.ckpt"
-CKPT_PATH = ROOT / "models" / model_name
+CKPT_PATH = ROOT / "weights" / model_name
 
 modnet = MODNet(backbone_pretrained=False).to(device)
 

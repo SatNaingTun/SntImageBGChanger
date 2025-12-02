@@ -14,7 +14,7 @@ from progress import start_progress, set_progress, complete_progress, fail_progr
 
 from tqdm import tqdm
 
-ROOT = Path(__file__).resolve().parent  # project root
+ROOT = Path(__file__).resolve().parent.parent  # project root
 THIRDPARTY_DIR = ROOT / "thirdparty"
 MODNET_PATH = THIRDPARTY_DIR / "MODNet" / "src"
 
@@ -48,9 +48,9 @@ except ModuleNotFoundError as e:
 # --------------------------------------------------
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-ROOT = Path(__file__).resolve().parent
-webcam_model_name = "modnet_finetuned_photographic.ckpt"
-webcam_model_path = ROOT / "models" / webcam_model_name
+ROOT = Path(__file__).resolve().parent.parent
+webcam_model_name = "modnet_finetuned_webcam.ckpt"
+webcam_model_path = ROOT / "weights" / webcam_model_name
 
 print(f"🔧 Loading webcam MODNet model: {webcam_model_path}")
 
