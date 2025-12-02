@@ -4,22 +4,469 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Image Background Changer (MODNet)</title>
-  <link rel="stylesheet" href="/static/css/style.css">
   <style>
-    /* ✅ ensure video is in DOM but invisible until needed */
+    /* Modern color palette with blue theme */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    
+    html, body {
+      height: 100%;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --accent: #0ea5e9;
+      --accent-hover: #0284c7;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --border: rgba(14, 165, 233, 0.2);
+      --card-bg: rgba(15, 32, 39, 0.6);
+      --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    body {
+      margin: 0;
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 30%, #2c5364 100%);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      line-height: 1.6;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* Animated background elements */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(14, 165, 233, 0.08) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: moveBackground 20s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes moveBackground {
+      0% { transform: translate(0, 0); }
+      100% { transform: translate(50px, 50px); }
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(80px);
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb1 {
+      width: 350px;
+      height: 350px;
+      background: #0ea5e9;
+      top: 5%;
+      right: 10%;
+      animation: float 20s ease-in-out infinite;
+    }
+
+    .orb2 {
+      width: 300px;
+      height: 300px;
+      background: #06b6d4;
+      bottom: 10%;
+      left: 5%;
+      animation: float 15s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      33% { transform: translate(30px, -30px) scale(1.1); }
+      66% { transform: translate(-20px, 20px) scale(0.9); }
+    }
+
+    /* Page layout */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Glassmorphism card */
+    .card {
+      width: min(100%, 900px);
+      background: rgba(15, 32, 39, 0.6);
+      backdrop-filter: blur(20px);
+      border-radius: 24px;
+      padding: 40px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4),
+                  inset 0 1px 0 rgba(14, 165, 233, 0.2);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      animation: slideUp 0.6s ease-out;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Heading with gradient */
+    h2 {
+      font-size: clamp(24px, 4vw, 32px);
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #fff 0%, #0ea5e9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      letter-spacing: -0.5px;
+      text-align: center;
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 15px;
+      margin-bottom: 32px;
+      text-align: center;
+    }
+
+    /* Tab Toggle */
+    .tab-toggle {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      background: rgba(15, 32, 39, 0.8);
+      border-radius: 16px;
+      padding: 4px;
+      position: relative;
+    }
+
+    .tab-toggle input[type="radio"] {
+      display: none;
+    }
+
+    .tab {
+      flex: 1;
+      padding: 12px 20px;
+      text-align: center;
+      cursor: pointer;
+      border-radius: 12px;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      color: var(--text-secondary);
+      position: relative;
+      z-index: 1;
+    }
+
+    .tab-toggle input[type="radio"]:checked + .tab {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      color: white;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.4);
+    }
+
+    /* Form elements */
+    label {
+      display: block;
+      margin-bottom: 20px;
+      color: var(--text-primary);
+      font-weight: 500;
+      font-size: 14px;
+    }
+
+    input[type="file"],
+    select,
+    input[type="color"],
+    input[type="range"] {
+      width: 100%;
+      margin-top: 8px;
+      padding: 12px;
+      background: rgba(15, 32, 39, 0.8);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 14px;
+      transition: all 0.3s ease;
+    }
+
+    input[type="file"]:hover,
+    select:hover {
+      border-color: rgba(14, 165, 233, 0.5);
+      background: rgba(15, 32, 39, 0.9);
+    }
+
+    input[type="color"] {
+      height: 50px;
+      cursor: pointer;
+    }
+
+    input[type="range"] {
+      padding: 0;
+      height: 8px;
+      background: rgba(14, 165, 233, 0.2);
+      border: none;
+      cursor: pointer;
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(14, 165, 233, 0.5);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+      color: white;
+      box-shadow: 0 8px 20px rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(14, 165, 233, 0.4);
+    }
+
+    .btn-secondary {
+      background: rgba(15, 32, 39, 0.8);
+      color: var(--text-primary);
+      border: 1px solid rgba(14, 165, 233, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(15, 32, 39, 0.9);
+      border-color: rgba(14, 165, 233, 0.5);
+    }
+
+    .btn-success {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      color: white;
+      box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-success:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(16, 185, 129, 0.4);
+    }
+
+    .btn-bar {
+      display: flex;
+      gap: 12px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .btn-bar .btn {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    /* Camera container */
+    .camera-container {
+      margin: 20px 0;
+      background: rgba(0, 0, 0, 0.4);
+      border-radius: 16px;
+      padding: 16px;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
     .camera-container.hidden {
       display: block !important;
       visibility: hidden;
       height: 0;
       overflow: hidden;
+      padding: 0;
+      margin: 0;
+    }
+
+    #cameraPreview {
+      width: 100%;
+      max-width: 400px;
+      height: auto;
+      border-radius: 12px;
+      display: block;
+      margin: 0 auto 12px;
+    }
+
+    .camera-canvas {
+      width: 100%;
+      max-width: 400px;
+      border-radius: 12px;
+      display: block;
+      margin: 0 auto;
+      border: 2px solid rgba(14, 165, 233, 0.4);
+    }
+
+    /* Canvas wrapper */
+    .canvas-wrapper {
+      margin: 20px 0;
+      text-align: center;
+    }
+
+    /* Image preview grid */
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+      margin-top: 32px;
+    }
+
+    .image-box {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      overflow: hidden;
+      border: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .image-label {
+      padding: 12px;
+      background: rgba(14, 165, 233, 0.15);
+      color: var(--text-primary);
+      font-weight: 600;
+      text-align: center;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(14, 165, 233, 0.2);
+    }
+
+    .image-box img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+
+    .checker {
+      background-image: 
+        linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,0.1) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,0.1) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,0.1) 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+    }
+
+    /* Loading indicator */
+    #loading {
+      text-align: center;
+      padding: 32px;
+      color: var(--accent);
+      font-size: 18px;
+      font-weight: 500;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Hidden class */
+    .hidden {
+      display: none !important;
+    }
+
+    /* Center column */
+    .center-column {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Field column start */
+    .field-col-start {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    #blurValue {
+      display: inline-block;
+      min-width: 30px;
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 640px) {
+      .card {
+        padding: 24px;
+      }
+
+      .btn-bar {
+        flex-direction: column;
+      }
+
+      .btn-bar .btn {
+        width: 100%;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
 
 <body>
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+
   <main class="page">
     <section class="card">
-      <h2>Image Background Changer (MODNet)</h2>
+      <h2>SNT Image Background Changer</h2>
       <p class="subtitle">
         Choose how to provide your portrait: upload an image or take a photo using your camera.
       </p>
@@ -48,7 +495,7 @@
           <div class="center-column">
             <button type="button" class="btn btn-secondary" id="toggleCameraBtn">📷 Start Camera</button>
 
-            <!-- ✅ Video always exists in DOM but initially invisible -->
+            <!-- Video always exists in DOM but initially invisible -->
             <div id="cameraContainer" class="camera-container hidden">
               <video id="cameraPreview" autoplay playsinline width="320" height="240"></video>
               <div class="btn-bar">
@@ -71,7 +518,6 @@
             <option value="custom">Custom background image</option>
             <option value="transparent">Remove background (PNG)</option>
             <option value="blur_bg">Blur background</option>
-            <!-- <option value="extract_bg">Extract background only</option> -->
           </select>
         </label>
 
@@ -81,7 +527,6 @@
           <input type="range" id="blurSlider" name="blur_strength" min="5" max="100" step="5" value="35">
           <span id="blurValue">35</span> px
         </label>
-
 
         <!-- Color Picker -->
         <label id="colorField" class="field-col-start">
@@ -126,7 +571,7 @@
     </section>
   </main>
 
-  <!-- ✅ Scripts loaded last (ensures DOM is ready) -->
+  <!-- Scripts loaded last (ensures DOM is ready) -->
   <script src="/static/js/camera.js"></script>
   <script src="/static/js/image.js"></script>
 </body>
