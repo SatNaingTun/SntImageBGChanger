@@ -56,6 +56,7 @@ app.mount("/images/changed", NoCacheStaticFiles(directory="images/changed"), nam
 app.mount("/images/background", NoCacheStaticFiles(directory="images/background"), name="background")
 
 # ---------------- Lightweight Routers ----------------
+
 app.include_router(VideoView.router)
 app.include_router(ImageView.router)
 app.include_router(gallery_api.router)
