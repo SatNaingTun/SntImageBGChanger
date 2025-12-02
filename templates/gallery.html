@@ -6,205 +6,303 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --accent: #0ea5e9;
+      --accent2: #06b6d4;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --glass-bg: rgba(15, 32, 39, 0.55);
+      --glass-border: rgba(14,165,233,0.25);
+    }
+
+    /* Background */
     body {
+      background: linear-gradient(135deg, #0f2027 0%, #203a43 35%, #2c5364 100%);
+      background-attachment: fixed;
       font-family: "Poppins", sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f6f7fb;
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Moving grid */
+    body::before {
+      content: "";
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(14,165,233,0.08) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: gridMove 22s linear infinite;
+      z-index: 0;
+    }
+
+    @keyframes gridMove {
+      0% { transform: translate(0,0); }
+      100% { transform: translate(60px,60px); }
+    }
+
+    /* Glowing orbs */
+    .orb {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(95px);
+      opacity: 0.25;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .orb1 {
+      width: 360px;
+      height: 360px;
+      top: 12%;
+      right: 12%;
+      background: var(--accent);
+      animation: float 18s ease-in-out infinite;
+    }
+
+    .orb2 {
+      width: 320px;
+      height: 320px;
+      bottom: 12%;
+      left: 10%;
+      background: var(--accent2);
+      animation: float 16s ease-in-out infinite reverse;
+    }
+
+    @keyframes float {
+      0%,100% { transform: translate(0,0) scale(1); }
+      50% { transform: translate(30px,-25px) scale(1.1); }
     }
 
     header {
-      background: #007bff;
-      color: white;
       text-align: center;
-      padding: 12px 0;
-      font-size: 1.2rem;
-      font-weight: 600;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      padding: 35px 0 10px;
+      font-size: 32px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #fff, #0ea5e9);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      z-index: 20;
+    }
+
+    .gallery-wrapper {
+      padding: 35px;
+      max-width: 1400px;
+      margin: auto;
+      position: relative;
+      z-index: 20;
     }
 
     .gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-      gap: 16px;
-      padding: 20px;
-      max-width: 1200px;
-      margin: auto;
+      gap: 25px;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
     }
 
+    /* Glass Cards */
     .item {
-      background: white;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      background: var(--glass-bg);
+      backdrop-filter: blur(18px);
+      border-radius: 20px;
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 12px 35px rgba(0,0,0,0.45),
+                  inset 0 1px 0 rgba(255,255,255,0.08);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transition: transform 0.2s ease;
+      transition: transform .22s ease, box-shadow .22s ease;
+      position: relative;
+      z-index: 30;
     }
 
-    .item:hover { transform: translateY(-3px); }
+    .item:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 18px 45px rgba(0,0,0,0.6);
+    }
 
+    /* Thumbnails */
     .thumb,
     .thumb-img {
       width: 100%;
       height: 180px;
       object-fit: cover;
-      background: #111;
       display: block;
+      background: rgba(0,0,0,0.4);
     }
 
-    /* VIDEO THUMBNAIL */
     .video-thumb {
       position: relative;
+      cursor: pointer;
       display: flex;
       justify-content: center;
       align-items: center;
-      overflow: hidden;
-      cursor: pointer;
-      background: radial-gradient(circle at top, #333, #000);
     }
-
-    .video-thumb img { opacity: 0.9; transition: opacity .2s; }
 
     .play-overlay {
       position: absolute;
-      width: 72px; height: 72px;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
+      background: rgba(255,255,255,0.14);
       backdrop-filter: blur(12px);
-      background: rgba(255,255,255,0.15);
-      display: flex; justify-content: center; align-items: center;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.55);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.55);
     }
 
     .play-overlay::before {
       content: "";
-      margin-left: 4px;
+      border-width: 15px 0 15px 24px;
       border-style: solid;
-      border-width: 14px 0 14px 22px;
       border-color: transparent transparent transparent white;
+      margin-left: 4px;
     }
 
-    .item.video:hover .thumb-img { opacity: 1; }
+    .filename {
+      padding-top: 10px;
+      text-align: center;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
 
     .actions {
-      padding: 10px;
+      padding: 12px 0 18px;
       display: flex;
       justify-content: space-evenly;
-      border-top: 1px solid #eee;
-      background: #fafafa;
     }
 
     .btn {
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-      border: none;
+      padding: 8px 14px;
+      border-radius: 10px;
+      font-weight: 600;
       cursor: pointer;
+      border: none;
+      color: white;
+      transition: transform .2s ease;
     }
 
-    .btn-download { background: #007bff; color: #fff; }
-    .btn-delete { background: #dc3545; color: #fff; }
+    .btn-download { background: #0284c7; }
+    .btn-delete   { background: #dc2626; }
+    .btn:hover { transform: scale(1.05); }
 
-    /* ===================== OVERLAY VIEWER ===================== */
+    #loading {
+      text-align: center;
+      color: var(--text-secondary);
+      font-size: 18px;
+      margin-top: 20px;
+    }
+
+    /* =================== OVERLAY VIEWER (YouTube style) =================== */
     .overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(14px);
+      background: rgba(0,0,0,0.65);
       display: flex;
       justify-content: center;
       align-items: center;
-      z-index: 9999;
+      z-index: 999;
     }
 
     .overlay.hidden { display: none; }
 
     .viewer-content {
-      position: relative;
       width: 90%;
       max-width: 1100px;
       max-height: 90vh;
-    }
-
-    .viewer-header {
-      margin-bottom: 10px;
-      color: #fff;
-    }
-
-    .viewer-title {
-      font-size: 1.4rem;
-      font-weight: 600;
-      margin-bottom: 8px;
-    }
-
-    .viewer-channel {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .channel-avatar {
-      width: 42px;
-      height: 42px;
-      border-radius: 50%;
-      background: #999;
-    }
-
-    .channel-info .channel-name {
-      font-size: 1rem;
-      font-weight: 600;
-      color: #fff;
-    }
-
-    .channel-info .channel-sub {
-      font-size: .85rem;
-      color: #ccc;
-    }
-
-    #viewerContainer video,
-    #viewerContainer img {
-      width: 100%;
-      max-height: 75vh;
-      background: black;
-      border-radius: 12px;
+      position: relative;
     }
 
     .close-btn {
       position: absolute;
-      right: -10px; top: -10px;
+      top: -10px;
+      right: -10px;
       font-size: 40px;
-      color: #fff;
       cursor: pointer;
+      color: white;
+      z-index: 100;
     }
 
     .nav-btn {
       position: absolute;
       top: 50%;
       transform: translateY(-50%);
-      font-size: 48px;
-      background: none;
-      border: none;
+      font-size: 55px;
       color: white;
+      border: none;
+      background: none;
       cursor: pointer;
       user-select: none;
+      z-index: 100;
     }
 
-    .prev-btn { left: -50px; }
-    .next-btn { right: -50px; }
+    .prev-btn { left: -55px; }
+    .next-btn { right: -55px; }
 
-    @media (max-width:900px) {
-      .prev-btn { left: 0; }
-      .next-btn { right: 0; }
+    .viewer-header {
+      margin-bottom: 12px;
+    }
+
+    .viewer-title {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .viewer-channel {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .channel-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+    }
+
+    .channel-name {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .channel-sub {
+      color: #cccccc;
+      font-size: .85rem;
+    }
+
+    #viewerContainer video,
+    #viewerContainer img {
+      width: 100%;
+      max-height: 75vh;
+      border-radius: 12px;
+      background: black;
     }
   </style>
 </head>
 
 <body>
-  <header>🖼 MODNet Gallery</header>
 
-  <main class="gallery" id="gallery"></main>
-  <div id="loading">⏳ Loading...</div>
+  <!-- Background ORBS -->
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
 
-  <!-- =================== YOUTUBE-STYLE OVERLAY =================== -->
+  <header>Gallery</header>
+
+  <div class="gallery-wrapper">
+    <div id="gallery" class="gallery"></div>
+    <div id="loading">⏳ Loading...</div>
+  </div>
+
+  <!-- ========== FULL OVERLAY VIEWER ========== -->
   <div id="viewerOverlay" class="overlay hidden">
     <div class="viewer-content">
 
@@ -212,13 +310,12 @@
       <button id="viewerPrev" class="nav-btn prev-btn">&#10094;</button>
       <button id="viewerNext" class="nav-btn next-btn">&#10095;</button>
 
-      <!-- HEADER -->
       <div id="viewerHeader" class="viewer-header">
         <div id="viewerTitle" class="viewer-title"></div>
 
         <div class="viewer-channel">
           <img src="/static/img/default-avatar.png" class="channel-avatar">
-          <div class="channel-info">
+          <div>
             <div class="channel-name">MODNet Background Changer</div>
             <div class="channel-sub">Preview Viewer</div>
           </div>
@@ -230,5 +327,6 @@
   </div>
 
   <script src="/static/js/gallery.js"></script>
+
 </body>
 </html>
