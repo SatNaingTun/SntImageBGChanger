@@ -73,6 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
     formData.append("file", file);
     formData.append("mode", modeSelect.value);
     formData.append("color", document.getElementById("colorPicker").value);
+    formData.append("blur_strength", document.getElementById("blurSlider").value);
 
     const bgFile = document.getElementById("bg_file").files[0];
     if (bgFile) formData.append("bg_file", bgFile);

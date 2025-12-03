@@ -71,7 +71,7 @@ modnet_webcam.eval()
 # 🔹 New: Blur Background Support
 # ==============================
 def apply_modnet_video_blur(frame, blur_strength=25):
-    """Apply MODNet matting and blur the background."""
+    """Apply MODNet matting and blur only the background."""
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     image = cv2.resize(image, (512, 512), interpolation=cv2.INTER_AREA)
     image = image.astype(np.float32) / 255.0
@@ -82,11 +82,22 @@ def apply_modnet_video_blur(frame, blur_strength=25):
 
     matte = matte[0][0].cpu().numpy()
     matte = cv2.resize(matte, (frame.shape[1], frame.shape[0]), interpolation=cv2.INTER_LINEAR)
+    matte = np.clip(matte, 0, 1)
+    matte = cv2.GaussianBlur(matte, (5, 5), 0)  # smooth edges
+    
     matte_3 = np.repeat(matte[:, :, np.newaxis], 3, axis=2)
 
     fg = frame.astype(np.float32) / 255.0
-    blurred_bg = cv2.GaussianBlur(fg, (blur_strength, blur_strength), 0)
+    
+    # Ensure blur kernel is odd and valid
+    blur_k = int(blur_strength)
+    if blur_k % 2 == 0:
+        blur_k += 1
+    blur_k = max(3, blur_k)
+    
+    blurred_bg = cv2.GaussianBlur(fg, (blur_k, blur_k), 0)
 
+    # matte=1.0 (foreground) → use original, matte=0.0 (background) → use blurred
     result = (fg * matte_3 + blurred_bg * (1 - matte_3)) * 255
     return result.astype(np.uint8)
 
@@ -94,10 +105,9 @@ def apply_modnet_video_blur(frame, blur_strength=25):
 # 🧠 INFERENCE FUNCTION
 # --------------------------------------------------
 def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=None, blur_strength=25):
-
     """
     Apply MODNet portrait matting for webcam frames.
-    mode: 'color', 'custom', 'transparent'
+    mode: 'color', 'custom', 'transparent', 'blur'
     """
     image = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
     image = cv2.resize(image, (512, 512), interpolation=cv2.INTER_AREA)
@@ -106,13 +116,17 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
 
     with torch.no_grad():
         _, _, matte = modnet_webcam(image_tensor, True)
+    
     matte = matte[0][0].cpu().numpy()
-
     matte = cv2.resize(matte, (frame.shape[1], frame.shape[0]), interpolation=cv2.INTER_LINEAR)
+    matte = np.clip(matte, 0, 1)
+    matte = cv2.GaussianBlur(matte, (5, 5), 0)  # smooth edges
+    
     matte_3 = np.repeat(matte[:, :, np.newaxis], 3, axis=2)
     fg = frame.astype(np.float32) / 255.0
 
     h, w, _ = frame.shape
+    
     if mode == "transparent":
         result = cv2.cvtColor((fg * matte_3 * 255).astype(np.uint8), cv2.COLOR_BGR2BGRA)
         result[:, :, 3] = (matte * 255).astype(np.uint8)
@@ -125,11 +139,16 @@ def apply_modnet_video(frame, mode="color", bgcolor=(255, 255, 255), bg_image=No
         return result.astype(np.uint8)
     
     elif mode == "blur":
-        k = max(3, int(blur_strength) // 2 * 2 + 1)  # make sure kernel size is odd
-        blurred_bg = cv2.GaussianBlur(fg, (k, k), 0)
+        # Ensure blur kernel is odd and valid
+        blur_k = int(blur_strength)
+        if blur_k % 2 == 0:
+            blur_k += 1
+        blur_k = max(3, blur_k)
+        
+        blurred_bg = cv2.GaussianBlur(fg, (blur_k, blur_k), 0)
+        # matte=1.0 (foreground sharp), matte=0.0 (background blurred)
         result = (fg * matte_3 + blurred_bg * (1 - matte_3)) * 255
         return result.astype(np.uint8)
-
 
     else:  # solid color background
         bg = np.full_like(frame, bgcolor, dtype=np.uint8).astype(np.float32) / 255.0
