@@ -184,7 +184,8 @@ def extract_background(frame_bgr):
 @torch.inference_mode()
 def apply_modnet_blur_background(frame_bgr, blur_strength=35):
     """
-    Keep the person clear, blur only the extracted background region.
+    Keep the person/foreground sharp, blur only the background region.
+    Uses MODNet matte to isolate foreground from background.
     """
     h, w, _ = frame_bgr.shape
     rgb = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2RGB)
@@ -195,15 +196,27 @@ def apply_modnet_blur_background(frame_bgr, blur_strength=35):
     matte = matte[0][0].cpu().numpy()
     matte = cv2.resize(matte, (w, h), interpolation=cv2.INTER_LINEAR)
     matte = np.clip(matte, 0, 1)
+    
+    # Smooth matte edges for better blending
     matte = cv2.GaussianBlur(matte, (5, 5), 0)
 
-    # Prepare blurred background
-    bg = cv2.GaussianBlur(frame_bgr, (blur_strength, blur_strength), 0)
+    # Ensure blur strength is odd number for cv2.GaussianBlur
+    blur_k = int(blur_strength)
+    if blur_k % 2 == 0:
+        blur_k += 1
+    blur_k = max(3, blur_k)  # minimum kernel size
 
-    # Blend using matte
+    # Create blurred background
+    blurred_bg = cv2.GaussianBlur(frame_bgr, (blur_k, blur_k), 0)
+
+    # Matte: 1.0 = foreground (keep original), 0.0 = background (use blurred)
+    # Expand matte to 3 channels for blending
     matte_3 = np.repeat(matte[:, :, None], 3, axis=2)
-    out = frame_bgr.astype(np.float32) * matte_3 + bg.astype(np.float32) * (1 - matte_3)
+
+    # Blend: foreground stays sharp, background gets blurred
+    out = frame_bgr.astype(np.float32) * matte_3 + blurred_bg.astype(np.float32) * (1 - matte_3)
     out = np.clip(out, 0, 255).astype(np.uint8)
+    
     return out
 
 if __name__ == "__main__":
