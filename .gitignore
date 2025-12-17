@@ -37,4 +37,27 @@ __pycache__/main.cpython-313.pyc
 __pycache__/main.cpython-313.pyc
 
 thirdparty/*
+# Ignore cloned third‑party MODNet repository
+thirdparty/MODNet/
+# Keep the rest of thirdparty (if any) tracked)
+# thirdparty/
+
+# Weights/checkpoints (large files)
+# weights/
+# *.ckpt
+# *.pt
+
+# Generated images/videos
+images/
+video/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.pyo
+
+# IDE & OS
+.vscode/
+*.swp
+.DS_Store
 

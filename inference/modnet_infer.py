@@ -1,4 +1,5 @@
 import subprocess
+from time import time
 import torch
 import cv2
 import numpy as np
@@ -228,5 +229,8 @@ if __name__ == "__main__":
         raise FileNotFoundError(f"❌ Could not read image: {input_path}")
     # print("Extracting background only...")
     # background = extract_background(frame_bgr)
+    startTime=time()
     output=apply_modnet_blur_background(frame_bgr, blur_strength=35)
+    endTime=time()
+    print(f"Processing time: {endTime-startTime} seconds")
     cv2.imwrite(output_path, output)
