@@ -10,6 +10,8 @@ from fastapi.templating import Jinja2Templates
 # ✅ Lightweight routers first
 from routers import ImageView, VideoView, gallery_api
 from routers import CleanFiles
+from routers.passport_api import router as passport_api_router
+from routers.passport import router as passport_page_router
 
 app = FastAPI(title="SNT Background Changer App")
 
@@ -61,6 +63,8 @@ app.include_router(VideoView.router)
 app.include_router(ImageView.router)
 app.include_router(gallery_api.router)
 app.include_router(CleanFiles.router)
+app.include_router(passport_api_router)
+app.include_router(passport_page_router)
 
 # ---------------- Async Heavy Routers ----------------
 async def async_import_router(module_name: str):

@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Passport/Visa Photo Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body { font-family: system-ui, Arial; margin: 18px; }
+    .row { display: flex; gap: 18px; flex-wrap: wrap; align-items: flex-start; }
+    .card { border: 1px solid #ddd; border-radius: 12px; padding: 14px; }
+    .controls label { display:block; margin: 10px 0 6px; font-size: 13px; }
+    input, select { width: 100%; padding: 8px; border-radius: 10px; border: 1px solid #ccc; }
+    button { padding: 10px 12px; border-radius: 12px; border: 1px solid #222; background: #222; color: #fff; cursor:pointer; }
+    button.secondary { background:#fff; color:#222; }
+    canvas { border: 1px solid #ddd; border-radius: 12px; max-width: 100%; }
+    .hint { font-size: 12px; color: #555; line-height: 1.35; }
+  </style>
+</head>
+<body>
+  <h2>Passport / Visa Photo Generator</h2>
+
+  <div class="row">
+    <div class="card controls" style="width: 320px;">
+      <label>Upload image</label>
+      <input type="file" id="file" accept="image/*"/>
+
+      <label>Output sizing mode</label>
+      <select id="mode">
+        <option value="mm">Millimeters + DPI</option>
+        <option value="px">Pixels</option>
+      </select>
+
+      <div id="mmBox">
+        <label>Width (mm)</label>
+        <input type="number" id="wmm" value="35" step="0.1"/>
+        <label>Height (mm)</label>
+        <input type="number" id="hmm" value="45" step="0.1"/>
+        <label>DPI</label>
+        <input type="number" id="dpi" value="300"/>
+      </div>
+
+      <div id="pxBox" style="display:none;">
+        <label>Width (px)</label>
+        <input type="number" id="wpx" value="413"/>
+        <label>Height (px)</label>
+        <input type="number" id="hpx" value="531"/>
+      </div>
+
+      <label>Background</label>
+      <select id="bg">
+        <option value="white">White</option>
+        <option value="blue">Light Blue</option>
+        <option value="custom">Custom</option>
+      </select>
+      <label>Custom background (hex)</label>
+      <input type="text" id="bghex" value="#FFFFFF"/>
+
+      <label>Margin (%)</label>
+      <input type="number" id="margin" value="6" step="0.5"/>
+
+      <label>Format</label>
+      <select id="fmt">
+        <option value="jpeg">JPEG</option>
+        <option value="png">PNG</option>
+      </select>
+
+      <div style="display:flex; gap:10px; margin-top:14px;">
+        <button id="download">Generate & Download</button>
+        <button class="secondary" id="reset">Reset View</button>
+      </div>
+
+      <p class="hint" style="margin-top:12px;">
+        Crop controls: <b>drag</b> to move the photo; <b>mouse wheel</b> to zoom.
+        The crop box stays fixed to your required aspect ratio.
+      </p>
+    </div>
+
+    <div class="card" style="flex: 1; min-width: 360px;">
+      <canvas id="c" width="900" height="600"></canvas>
+      <p class="hint">
+        The rectangle is the crop area that will be sent to the API.
+      </p>
+    </div>
+  </div>
+
+  <script src="/static/js/passport.js"></script>
+</body>
+</html>
