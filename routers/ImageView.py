@@ -10,6 +10,12 @@ from inference.modnet_infer import apply_modnet, apply_modnet_cutout_rgba, apply
 
 templates = Jinja2Templates(directory="templates")
 
+
+def render_template(template_name: str, request: Request, **context):
+    template = templates.get_template(template_name)
+    return HTMLResponse(template.render(request=request, **context))
+
+
 router = APIRouter(prefix="/imageview", tags=["Image View"])
 
 # -------------------------------------------------------
@@ -42,7 +48,7 @@ def cleanup_old_files(folder: Path, max_files: int = 15):
 @router.get("/", response_class=HTMLResponse)
 async def ImageView(request: Request):
     """Render upload page."""
-    return templates.TemplateResponse("ImageView.html", {"request": request, "result": None})
+    return render_template("ImageView.html", request, result=None)
 
 
 # @router.post("/", response_class=HTMLResponse)

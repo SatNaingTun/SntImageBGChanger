@@ -29,13 +29,16 @@ for folder in folders:
 # ---------------- Templates ----------------
 templates = Jinja2Templates(directory="templates")
 
-def static_version(path: str) -> str:
-    """Append ?v=timestamp to static files for cache busting."""
-    full_path = os.path.join("static", path.lstrip("/"))
-    version = int(os.path.getmtime(full_path)) if os.path.exists(full_path) else int(time())
-    return f"/static/{path}?v={version}"
 
-templates.env.globals["static_version"] = static_version
+def render_template(template_name: str, request: Request, **context):
+    """Render a template without using Starlette's TemplateResponse cache path.
+
+    The current FastAPI/Starlette + Jinja setup crashes when a context dict is
+    passed through TemplateResponse's built-in template cache. Rendering directly
+    avoids the unhashable cache-key issue while keeping the same output.
+    """
+    template = templates.get_template(template_name)
+    return HTMLResponse(template.render(request=request, **context))
 
 # ---------------- Static Mounts ----------------
 class NoCacheStaticFiles(StaticFiles):
@@ -48,7 +51,7 @@ class NoCacheStaticFiles(StaticFiles):
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
     """Home Page"""
-    return templates.TemplateResponse("index.html", {"request": request})
+    return render_template("index.html", request)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 app.mount("/video", StaticFiles(directory="video"), name="video")
@@ -98,9 +101,9 @@ async def load_heavy_routers():
 @app.get("/gallery", response_class=HTMLResponse)
 async def gallery_page(request: Request):
     """Gallery Page"""
-    return templates.TemplateResponse("gallery.html", {"request": request})
+    return render_template("gallery.html", request)
 
 # ---------------- Server Entry ----------------
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:app", host="127.0.0.1", port=8002, reload=True)
