@@ -18,13 +18,10 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: fastapi-app-linux
             asset_name: fastapi-app-ubuntu.tar.gz
           - os: windows-latest
-            artifact_name: fastapi-app-windows
             asset_name: fastapi-app-windows.zip
           - os: macos-latest
-            artifact_name: fastapi-app-macos
             asset_name: fastapi-app-macos.tar.gz
 
     steps:
@@ -34,7 +31,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install Dependencies
