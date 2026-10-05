@@ -1,0 +1,5 @@
+# Optional: Install only if you have an NVIDIA GPU and want CUDA acceleration
+--index-url https://download.pytorch.org/whl/cu121
+torch==2.14.0
+torchvision==0.29.0
+torchaudio==2.11.0
