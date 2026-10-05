@@ -1,0 +1,41 @@
+name: Release Ubuntu Desktop
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller main.spec
+
+      - name: Archive Ubuntu Build
+        run: |
+          cd dist/backgroundchanger
+          tar -czvf ../../backgroundchanger-ubuntu.tar.gz *
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: backgroundchanger-ubuntu.tar.gz

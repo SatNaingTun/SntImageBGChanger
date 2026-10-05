@@ -1,0 +1,41 @@
+name: Release macOS Desktop
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-mac:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt pyinstaller
+
+      - name: Build with PyInstaller
+        run: |
+          pyinstaller main.spec
+
+      - name: Archive macOS Build
+        run: |
+          cd dist/backgroundchanger
+          tar -czvf ../../backgroundchanger-macos.tar.gz *
+
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: backgroundchanger-macos.tar.gz
