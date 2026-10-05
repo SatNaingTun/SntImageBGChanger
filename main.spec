@@ -6,8 +6,9 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
+   # In main.spec, remove or comment out the weights folder from datas:
     datas=[
-        ('weights', 'weights'),
+        # ('weights', 'weights'),  <- Remove this so the binary stays small!
         ('static', 'static'),
         ('templates', 'templates'),
         ('routers', 'routers'),
