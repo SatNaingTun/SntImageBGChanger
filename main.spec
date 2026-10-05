@@ -6,9 +6,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-   # In main.spec, remove or comment out the weights folder from datas:
     datas=[
-        # ('weights', 'weights'),  <- Remove this so the binary stays small!
         ('static', 'static'),
         ('templates', 'templates'),
         ('routers', 'routers'),
@@ -18,20 +16,17 @@ a = Analysis(
         'uvicorn',
         'fastapi',
         'cv2',
-        'torch',
-        'torchvision',
         'PIL',
         'numpy'
     ],
+    hookspath=[],
+    hooksconfig={},
+    runtime_hooks=[],
     excludes=[
         'tkinter',
         'unittest',
         'test',
     ],
-    hookspath=[],
-    hooksconfig={},
-    runtime_hooks=[],
-    excludes=[],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
