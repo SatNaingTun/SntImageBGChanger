@@ -23,6 +23,11 @@ a = Analysis(
         'PIL',
         'numpy'
     ],
+    excludes=[
+        'tkinter',
+        'unittest',
+        'test',
+    ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],

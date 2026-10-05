@@ -31,7 +31,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.11'
           cache: 'pip'
 
       - name: Install Dependencies
@@ -48,7 +48,7 @@ jobs:
         if: matrix.os != 'windows-latest'
         run: |
           cd dist/fastapi-app
-          tar -czvf ../../${{ matrix.asset_name }} *
+          tar -czvf ../../${{ matrix.asset_name }} --exclude='*.ckpt' *
 
       - name: Archive Windows
         if: matrix.os == 'windows-latest'
