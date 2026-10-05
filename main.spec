@@ -7,25 +7,31 @@ a = Analysis(
     pathex=[],
     binaries=[],
     datas=[
-        ('static', 'static'),
+        # Include your HTML templates and static assets if your project uses them
         ('templates', 'templates'),
-        ('routers', 'routers'),
-        ('inference', 'inference')
+        ('static', 'static'),
     ],
     hiddenimports=[
-        'uvicorn',
+        'uvicorn.logging',
+        'uvicorn.loops',
+        'uvicorn.loops.auto',
+        'uvicorn.protocols',
+        'uvicorn.protocols.http',
+        'uvicorn.protocols.http.auto',
         'fastapi',
-        'cv2',
-        'PIL',
-        'numpy'
+        'pydantic',
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
     excludes=[
-        'tkinter',
-        'unittest',
-        'test',
+        # Exclude heavy deep learning and computer vision libraries 
+        # so the generated desktop archive stays tiny and passes GitHub limits
+        'torch',
+        'torchvision',
+        'torchaudio',
+        'cv2',
+        'numpy',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
